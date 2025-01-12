@@ -7,10 +7,16 @@ using System;
 using System.Text;
 using MovieRecommendationApi.Data;
 using MovieRecommendationApi.DataShaping;
+using Mapster;
+using MovieRecommendationApi.Dtos;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+builder.Services.AddMapster();
+TypeAdapterConfig.GlobalSettings.Scan(typeof(MapsterProfile).Assembly);
+
 builder.Services.AddTransient<IPropertyChecker, PropertyChecker>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
