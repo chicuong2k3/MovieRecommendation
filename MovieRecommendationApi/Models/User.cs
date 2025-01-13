@@ -14,9 +14,9 @@ namespace MovieRecommendationApi.Models
         public string Avatar { get; set; }
         public string Role { set; get; }
 
-        public ICollection<RatingList> RatingLists { set; get; }
-        public ICollection<Review> Reviews { set; get; }
-        public ICollection<WatchMovie> WatchMovies { set; get; }
-        public ICollection<FavoriteMovie> FavoriteMovies { set; get; }
+        public IList<RatingList> RatingLists { set; get; }
+        public IList<Review> Reviews { set; get; }
+        public IList<WatchMovie> WatchMovies { set; get; }
+        public IList<FavoriteMovie> FavoriteMovies { set; get; }
     }
 }

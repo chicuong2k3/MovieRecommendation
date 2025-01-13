@@ -24,16 +24,16 @@ namespace MovieRecommendationApi.Models
         public int Budget { get; set; }
 
         [JsonPropertyName("categories")]
-        public ICollection<string>? Categories { get; set; }
+        public IList<string>? Categories { get; set; }
 
         [JsonPropertyName("genres")]
-        public ICollection<Genre>? Genres { get; set; }
+        public IList<Genre>? Genres { get; set; }
 
         [JsonPropertyName("homepage")]
         public string? Homepage { get; set; }
 
         [JsonPropertyName("origin_country")]
-        public ICollection<string>? OriginCountry { get; set; }
+        public IList<string>? OriginCountry { get; set; }
 
         [JsonPropertyName("original_language")]
         public string? OriginalLanguage { get; set; }
@@ -51,10 +51,10 @@ namespace MovieRecommendationApi.Models
         public string? PosterPath { get; set; }
 
         [JsonPropertyName("production_companies")]
-        public ICollection<ProductionCompany>? ProductionCompanies { get; set; }
+        public IList<ProductionCompany>? ProductionCompanies { get; set; }
 
         [JsonPropertyName("production_countries")]
-        public ICollection<ProductionCountry>? ProductionCountries { get; set; }
+        public IList<ProductionCountry>? ProductionCountries { get; set; }
 
         [JsonPropertyName("release_date")]
         public string? ReleaseDate { get; set; }
@@ -66,7 +66,7 @@ namespace MovieRecommendationApi.Models
         public int Runtime { get; set; }
 
         [JsonPropertyName("spoken_languages")]
-        public ICollection<SpokenLanguage>? SpokenLanguages { get; set; }
+        public IList<SpokenLanguage>? SpokenLanguages { get; set; }
 
         [JsonPropertyName("status")]
         public string? Status { get; set; }
@@ -90,18 +90,18 @@ namespace MovieRecommendationApi.Models
         public Credit? Credits { get; set; }
 
         [JsonPropertyName("movie_casts")]
-        public ICollection<MovieCast>? MovieCasts { get; set; }
+        public IList<MovieCast>? MovieCasts { get; set; }
 
         [JsonPropertyName("rating_lists")]
-        public ICollection<RatingList>? RatingLists { get; set; }
+        public IList<RatingList>? RatingLists { get; set; }
 
         [JsonPropertyName("reviews")]
-        public ICollection<Review>? Reviews { get; set; }
+        public IList<Review>? Reviews { get; set; }
 
         [JsonPropertyName("watch_movies")]
-        public ICollection<WatchMovie>? WatchMovies { get; set; }
+        public IList<WatchMovie>? WatchMovies { get; set; }
 
         [JsonPropertyName("favorite_movies")]
-        public ICollection<FavoriteMovie>? FavoriteMovies { get; set; }
+        public IList<FavoriteMovie>? FavoriteMovies { get; set; }
     }
 }

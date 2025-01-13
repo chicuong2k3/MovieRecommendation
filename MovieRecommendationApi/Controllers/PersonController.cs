@@ -27,6 +27,7 @@ namespace MovieRecommendationApi.Controllers
             this.dbContext = dbContext;
             this.mapper = mapper;
         }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
