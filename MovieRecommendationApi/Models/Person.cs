@@ -47,6 +47,6 @@ namespace MovieRecommendationApi.Models
 
         [JsonPropertyName("movie_credits")]
         public Credit? MovieCredits { get; set; }
-        public ICollection<MovieCast>? MovieCasts { get; set; }
+        public IList<MovieCast>? MovieCasts { get; set; }
     }
 }

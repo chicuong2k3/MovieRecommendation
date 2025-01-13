@@ -14,6 +14,6 @@ namespace MovieRecommendationApi.Models
         public string? EnglishName { get; set; }
 
         [JsonPropertyName("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
     }
 }
