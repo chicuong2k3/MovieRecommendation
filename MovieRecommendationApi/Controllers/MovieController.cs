@@ -8,6 +8,7 @@ using MovieRecommendationApi.Dtos;
 using MovieRecommendationApi.Models;
 using MovieRecommendationApi.Requests;
 using System.Net;
+using System.Reflection.Metadata;
 using System.Text.Json;
 
 namespace MovieRecommendationApi.Controllers
@@ -314,5 +315,67 @@ namespace MovieRecommendationApi.Controllers
 				return BadRequest(ex.Message);
 			}
 		}
+
+        [HttpGet("favorite-list")]
+		[FirebaseAuthenticationAttribute]
+		public async Task<IActionResult> GetFavoriteList([FromQuery] int Page = 1, [FromQuery] int PageSize = 20, [FromQuery] string? Query = null)
+        {
+            try
+            {
+				var userId = User.GetUserId();
+                if(string.IsNullOrWhiteSpace(Query))
+                {
+                    var res = await dbContext.FavoriteMovies
+                        .Where(f => f.UserId == userId)
+						.Skip((Page - 1) * PageSize)
+					    .Take(PageSize)
+                        .Select(x => x.Movie)
+                        .ToListAsync();
+                    return Ok(res);
+				}
+				var res1 = await dbContext.FavoriteMovies
+					   .Where(f => f.UserId == userId && f.Movie.Title.Contains(Query))
+					   .Skip((Page - 1) * PageSize)
+					   .Take(PageSize)
+					   .Select(x => x.Movie)
+					   .ToListAsync();
+				return Ok(res1);
+			}
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+		[HttpPost("favorite-list")]
+		[FirebaseAuthenticationAttribute]
+		public async Task<IActionResult> AddFavoriteList([FromBody] AddFavoriteVM model)
+		{
+			try
+			{
+                var userId = User.GetUserId();
+                List<FavoriteMovie> add = new List<FavoriteMovie>();
+                foreach(var item in model.movies)
+                {
+                    add.Add(new FavoriteMovie()
+                    {
+                        UserId = userId,
+                        MovieId = item
+                    });
+                }
+                await dbContext.FavoriteMovies.AddRangeAsync(add);
+				await dbContext.SaveChangesAsync();
+				return Ok();
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(ex.Message);
+			}
+		}
 	}
+
+    public class AddFavoriteVM
+    {
+        public List<int> movies { set; get; }
+    }
 }
