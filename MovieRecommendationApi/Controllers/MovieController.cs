@@ -145,7 +145,7 @@ namespace MovieRecommendationApi.Controllers
             return Ok();
         }
 
-        [HttpPost("/watch-list")]
+        [HttpPost("watch-list")]
         public async Task<IActionResult> AddMovieToWatchList([FromBody] AddToWatchListRequest request)
         {
             var userId = User.GetUserId();
@@ -171,5 +171,72 @@ namespace MovieRecommendationApi.Controllers
 
             return Ok();
         }
-    }
+
+		[HttpGet("top-trending-movies")]
+        public async Task<IActionResult> GetTopTrendingMovie()
+        {
+            try
+            {
+				var res = await dbContext.Movies.OrderByDescending(x => x.Popularity).Take(10).ToListAsync();
+				return Ok(res);
+			}
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+		[HttpGet("watch-list")]
+		public async Task<IActionResult> GetWatchList()
+		{
+			try
+			{
+				var userId = User.GetUserId();
+                var res = await dbContext.Users
+                    .Where(x => x.Id == userId)
+                    .Include(x => x.WatchMovies)
+                    .ThenInclude(a => a.Movie)
+                    .ToListAsync();
+				return Ok(res);
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(ex.Message);
+			}
+		}
+
+        [HttpGet("rating_list")]
+        public async Task<IActionResult> GetRatingList()
+        {
+            try
+            {
+                var userId = User.GetUserId();
+                var res = await dbContext.Users
+                    .Where(x => x.Id == userId)
+                    .Include(x => x.RatingLists)
+                    .ThenInclude(rl => rl.Rating)
+                    .ToListAsync();
+                return Ok(res);
+            }
+            catch(Exception ex )
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("recommentdation-movie")]
+        public async Task<IActionResult> GetRecommendationMovie()
+        {
+            try
+            {
+				var userId = User.GetUserId();
+                var res = await dbContext.Users
+                return Ok(res);
+			}
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+	}
 }
