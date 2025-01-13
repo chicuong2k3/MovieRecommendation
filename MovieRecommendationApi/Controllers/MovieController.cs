@@ -115,5 +115,61 @@ namespace MovieRecommendationApi.Controllers
 
             return Ok(moviesDto);
         }
+
+
+        [HttpPost("{id}/rate")]
+        public async Task<IActionResult> AddMovieRating(int id, [FromBody] RateMovieRequest request)
+        {
+            var userId = User.GetUserId();
+
+            var movie = await dbContext.Movies
+                .Where(x => x.Id == id)
+                .FirstOrDefaultAsync();
+
+            if (movie == null)
+            {
+                var error = ErrorResponse.Create("Movie not found", "movie_not_found", HttpStatusCode.NotFound);
+                return error.MapErrorResponse();
+            }
+
+            var ratingList = new RatingList
+            {
+                MovieId = id,
+                Rating = request.Rating,
+                UserId = userId
+            };
+
+            dbContext.RatingLists.Add(ratingList);
+            await dbContext.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        [HttpPost("/watch-list")]
+        public async Task<IActionResult> AddMovieToWatchList([FromBody] AddToWatchListRequest request)
+        {
+            var userId = User.GetUserId();
+
+            var movie = await dbContext.Movies
+                .Where(x => x.Id == request.MovieId)
+                .FirstOrDefaultAsync();
+
+            if (movie == null)
+            {
+                var error = ErrorResponse.Create("Movie not found", "movie_not_found", HttpStatusCode.NotFound);
+                return error.MapErrorResponse();
+            }
+
+            var watchMovie = new WatchMovie
+            {
+                MovieId = request.MovieId,
+                UserId = userId
+            };
+
+            dbContext.WatchMovies.Add(watchMovie);
+            await dbContext.SaveChangesAsync();
+
+            return Ok();
+        }
     }
 }
