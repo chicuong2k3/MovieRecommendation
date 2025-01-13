@@ -103,5 +103,7 @@ namespace MovieRecommendationApi.Models
 
         [JsonPropertyName("favorite_movies")]
         public IList<FavoriteMovie>? FavoriteMovies { get; set; }
-    }
+
+		public IList<Video>? Videos { get; set; }
+	}
 }

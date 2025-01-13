@@ -112,6 +112,12 @@ namespace MovieRecommendationApi.Data
                 .WithMany()
                 .HasForeignKey(sm => sm.SimilarMovieId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Video>()
+                .HasOne(x => x.movie)
+                .WithMany(m => m.Videos)
+                .HasForeignKey(x => x.IdMovie)
+                .OnDelete(DeleteBehavior.Restrict);
         }
 
         public DbSet<BelongsToCollection> BelongsToCollections { get; set; }
