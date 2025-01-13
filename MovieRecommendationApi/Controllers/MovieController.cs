@@ -171,5 +171,19 @@ namespace MovieRecommendationApi.Controllers
 
             return Ok();
         }
+
+		[HttpGet("top-trending-movies")]
+        public async Task<IActionResult> GetTopTrendingMovie()
+        {
+            try
+            {
+				var res = await dbContext.Movies.OrderByDescending(x => x.Popularity).Take(10).ToListAsync();
+				return Ok(res);
+			}
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
