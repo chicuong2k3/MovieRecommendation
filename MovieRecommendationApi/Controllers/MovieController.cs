@@ -204,18 +204,6 @@ namespace MovieRecommendationApi.Controllers
             return Ok();
         }
 
-        [HttpGet("watch-list")]
-        public async Task<IActionResult> GetWatchList()
-        {
-            var userId = User.GetUserId();
-            var res = await dbContext.Users
-                .Where(x => x.Id == userId)
-                .Include(x => x.WatchMovies)
-                .ThenInclude(a => a.Movie)
-                .ToListAsync();
-            return Ok(res);
-        }
-
         [HttpGet("top-trending-movies")]
         public async Task<IActionResult> GetTopTrendingMovie()
         {
