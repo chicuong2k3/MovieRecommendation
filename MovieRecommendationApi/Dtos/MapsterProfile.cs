@@ -10,6 +10,8 @@ namespace MovieRecommendationApi.Dtos
             config.NewConfig<Person, PersonDto>()
                 .Map(dest => dest.Id, src => src.Id)
                 .Map(dest => dest.Adult, src => src.Adult)
+                .Map(dest => dest.ImdbId, src => src.ImdbId)
+                .Map(dest => dest.TmdbId, src => src.TmdbId)
                 .Map(dest => dest.AlsoKnownAs, src => src.AlsoKnownAs)
                 .Map(dest => dest.Biography, src => src.Biography)
                 .Map(dest => dest.Birthday, src => src.Birthday)
@@ -25,6 +27,8 @@ namespace MovieRecommendationApi.Dtos
 
             config.NewConfig<Movie, MovieDto>()
                 .Map(dest => dest.Id, src => src.Id)
+                .Map(dest => dest.ImdbId, src => src.ImdbId)
+                .Map(dest => dest.TmdbId, src => src.TmdbId)
                 .Map(dest => dest.Adult, src => src.Adult)
                 .Map(dest => dest.BackdropPath, src => src.BackdropPath)
                 .Map(dest => dest.BelongsToCollection, src => src.BelongsToCollection)
@@ -78,6 +82,14 @@ namespace MovieRecommendationApi.Dtos
                 .Map(dest => dest.IsoCode, src => src.IsoCode)
                 .Map(dest => dest.Name, src => src.Name)
                 .Map(dest => dest.EnglishName, src => src.EnglishName);
+
+            config.NewConfig<MovieCredit, MovieCreditDto>()
+                .Map(dest => dest.Id, src => src.Id)
+                .Map(dest => dest.Cast, src => src.Cast);
+
+            config.NewConfig<Credit, CreditDto>()
+                .Map(dest => dest.Id, src => src.Id)
+                .Map(dest => dest.Cast, src => src.Cast);
         }
     }
 }

@@ -1,9 +1,13 @@
-﻿namespace MovieRecommendationApi.Dtos
+﻿using System.Text.Json.Serialization;
+
+namespace MovieRecommendationApi.Dtos
 {
     public class MovieDto
     {
         public int Id { get; set; }
         public bool Adult { get; set; }
+        public string? ImdbId { get; set; }
+        public int? TmdbId { get; set; }
         public string? BackdropPath { get; set; }
         public BelongsToCollectionDto? BelongsToCollection { get; set; }
         public int Budget { get; set; }
@@ -18,8 +22,8 @@
         public string? PosterPath { get; set; }
         public List<ProductionCompanyDto>? ProductionCompanies { get; set; }
         public List<ProductionCountryDto>? ProductionCountries { get; set; }
-        public string? ReleaseDate { get; set; }
-        public long? Revenue { get; set; }
+        public DateTime? ReleaseDate { get; set; }
+        //public int Revenue { get; set; }
         public int Runtime { get; set; }
         public List<SpokenLanguageDto>? SpokenLanguages { get; set; }
         public string? Status { get; set; }

@@ -44,9 +44,7 @@ namespace MovieRecommendationApi.Data
                    .WithMany(x => x.RatingLists)
                    .HasForeignKey(x => x.UserId)
                    .OnDelete(DeleteBehavior.NoAction);
-            // table Review
-            builder.Entity<Review>()
-                .HasKey(x => new { x.MovieId, x.UserId });
+
             builder.Entity<Review>()
                 .HasOne(x => x.User)
                 .WithMany(x => x.Reviews)
@@ -114,14 +112,15 @@ namespace MovieRecommendationApi.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Video>()
-                .HasOne(x => x.movie)
+                .HasOne(x => x.Movie)
                 .WithMany(m => m.Videos)
-                .HasForeignKey(x => x.IdMovie)
+                .HasForeignKey(x => x.MovieId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
 
         public DbSet<BelongsToCollection> BelongsToCollections { get; set; }
         public DbSet<Credit> Credits { get; set; }
+        public DbSet<MovieCredit> MovieCredits { get; set; }
         public DbSet<FavoriteMovie> FavoriteMovies { get; set; }
 
         public DbSet<Genre> Genres { get; set; }
@@ -139,6 +138,6 @@ namespace MovieRecommendationApi.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Video> Videos { get; set; }
         public DbSet<WatchMovie> WatchMovies { get; set; }
-        public DbSet<Movie> SimilarMovies { get; set; }
+        public DbSet<SimilarMovie> SimilarMovies { get; set; }
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using MovieRecommendationApi.Common;
 using MovieRecommendationApi.Data;
 using MovieRecommendationApi.Dtos;
+using MovieRecommendationApi.Models;
 using System.Net;
 using System.Text.Json;
 
@@ -69,7 +70,7 @@ namespace MovieRecommendationApi.Controllers
                 return error.MapErrorResponse();
             }
 
-            var movieCreditsDto = mapper.Map<CreditDto>(movieCredits);
+            var movieCreditsDto = mapper.Map<MovieCredit>(movieCredits);
 
 
             return Ok(movieCreditsDto);
