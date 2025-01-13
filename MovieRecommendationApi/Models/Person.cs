@@ -11,6 +11,10 @@ namespace MovieRecommendationApi.Models
 
         [JsonPropertyName("adult")]
         public bool Adult { get; set; }
+        [JsonPropertyName("imdb_id")]
+        public string? ImdbId { get; set; }
+        [JsonPropertyName("tmdb_id")]
+        public int? TmdbId { get; set; }
 
         [JsonPropertyName("also_known_as")]
         public List<string>? AlsoKnownAs { get; set; }
@@ -46,7 +50,7 @@ namespace MovieRecommendationApi.Models
         public string? ProfilePath { get; set; }
 
         [JsonPropertyName("movie_credits")]
-        public Credit? MovieCredits { get; set; }
+        public MovieCredit? MovieCredits { get; set; }
         public IList<MovieCast>? MovieCasts { get; set; }
     }
 }

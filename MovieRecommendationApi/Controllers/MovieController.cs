@@ -8,7 +8,6 @@ using MovieRecommendationApi.Dtos;
 using MovieRecommendationApi.Models;
 using MovieRecommendationApi.Requests;
 using System.Net;
-using System.Reflection.Metadata;
 using System.Text.Json;
 
 namespace MovieRecommendationApi.Controllers
@@ -74,6 +73,10 @@ namespace MovieRecommendationApi.Controllers
 			return Ok(movieDto);
 		}
 
+        [HttpGet("/search/movie")]
+        public async Task<IActionResult> SearchMovies([FromQuery] SearchMovieRequest request)
+        {
+            IQueryable<Movie> movies = dbContext.Movies.Include(x => x.Genres);
 		[HttpGet("/search/movie")]
 		public async Task<IActionResult> SearchMovies([FromQuery] SearchMovieRequest request)
 		{
@@ -84,6 +87,35 @@ namespace MovieRecommendationApi.Controllers
 				movies = movies.Where(x => x.Title != null && x.Title.ToLower().Contains(request.Query.ToLower()));
 			}
 
+            if (request.GenreIds != null && request.GenreIds.Any())
+            {
+                movies = movies.Where(x => x.Genres != null &&
+                    x.Genres.Any(g => request.GenreIds.Contains(g.Id)));
+            }
+
+            if (request.Ratings != null && request.Ratings.Any())
+            {
+                var movieIds = await dbContext.RatingLists
+                    .Where(x => request.Ratings.Contains(x.Rating))
+                    .Select(x => x.MovieId)
+                    .ToListAsync();
+
+                movies = movies.Where(x => movieIds.Contains(x.Id));
+            }
+
+            if (request.ReleaseDateFrom != null && request.RealeaseDateTo != null)
+            {
+                movies = movies.Where(x =>
+                    x.ReleaseDate >= request.ReleaseDateFrom
+                    && x.ReleaseDate <= request.RealeaseDateTo);
+            }
+
+            movies = movies.Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .Include(x => x.BelongsToCollection)
+                .Include(x => x.ProductionCompanies)
+                .Include(x => x.ProductionCountries)
+                .Include(x => x.SpokenLanguages);
 			movies = movies.Skip((request.Page - 1) * request.PageSize)
 				.Take(request.PageSize)
 				.Include(x => x.BelongsToCollection)
@@ -118,6 +150,11 @@ namespace MovieRecommendationApi.Controllers
 			return Ok(moviesDto);
 		}
 
+        [HttpPost("{id}/rate")]
+        [FirebaseAuthenticationAttribute]
+        public async Task<IActionResult> AddMovieRating(int id, [FromBody] RateMovieRequest request)
+        {
+            var userId = User.GetUserId();
 		[HttpPost("{id}/rate")]
 		[FirebaseAuthenticationAttribute]
 		public async Task<IActionResult> AddMovieRating(int id, [FromBody] RateMovieRequest request)
@@ -147,6 +184,11 @@ namespace MovieRecommendationApi.Controllers
 			return Ok();
 		}
 
+        [HttpPost("watch-list")]
+        [FirebaseAuthenticationAttribute]
+        public async Task<IActionResult> AddMovieToWatchList([FromBody] AddToWatchListRequest request)
+        {
+            var userId = User.GetUserId();
 		[HttpPost("watch-list")]
 		[FirebaseAuthenticationAttribute]
 		public async Task<IActionResult> AddMovieToWatchList([FromBody] AddToWatchListRequest request)
@@ -175,6 +217,54 @@ namespace MovieRecommendationApi.Controllers
 			return Ok();
 		}
 
+        [HttpGet("top-trending-movies")]
+        public async Task<IActionResult> GetTopTrendingMovie()
+        {
+            var res = await dbContext.Movies.OrderByDescending(x => x.Popularity).Take(10).ToListAsync();
+            return Ok(res);
+        }
+
+        [HttpGet("watch-list")]
+        public async Task<IActionResult> GetWatchList()
+        {
+            var userId = User.GetUserId();
+            var res = await dbContext.Users
+                .Where(x => x.Id == userId)
+                .Include(x => x.WatchMovies)
+                .ThenInclude(a => a.Movie)
+                .ToListAsync();
+            return Ok(res);
+        }
+        [HttpGet("watch-list")]
+        [FirebaseAuthenticationAttribute]
+        public async Task<IActionResult> GetWatchList([FromQuery] int Page = 1, [FromQuery] int PageSize = 20, [FromQuery] string? Query = null)
+        {
+            try
+            {
+                var userId = User.GetUserId();
+                if (string.IsNullOrWhiteSpace(Query))
+                {
+                    var res = await dbContext.WatchMovies
+                    .Where(x => x.Id == userId)
+                    .Skip((Page - 1) * PageSize)
+                    .Take(PageSize)
+                    .Select(x => x.Movie)
+                    .ToListAsync();
+                    return Ok(res);
+                }
+                var res1 = await dbContext.WatchMovies
+                    .Where(x => x.Id == userId && x.Movie.Title != null && x.Movie.Title.Contains(Query))
+                    .Skip((Page - 1) * PageSize)
+                    .Take(PageSize)
+                    .Select(x => x.Movie)
+                    .ToListAsync();
+                return Ok(res1);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 		[HttpGet("top-trending-movies")]
 		public async Task<IActionResult> GetTopTrendingMovie()
 		{
@@ -220,6 +310,18 @@ namespace MovieRecommendationApi.Controllers
 			}
 		}
 
+        [HttpGet("rating-list")]
+        [FirebaseAuthenticationAttribute]
+        public async Task<IActionResult> GetRatingList([FromQuery] int Page = 1, [FromQuery] int PageSize = 20, [FromQuery] string? Query = null)
+        {
+            var userId = User.GetUserId();
+            var res = await dbContext.Users
+                .Where(x => x.Id == userId)
+                .Include(x => x.RatingLists)
+                .ThenInclude(rl => rl.Rating)
+                .ToListAsync();
+            return Ok(res);
+        }
 		[HttpGet("rating-list")]
 		[FirebaseAuthenticationAttribute]
 		public async Task<IActionResult> GetRatingList([FromQuery] int Page = 1, [FromQuery] int PageSize = 20, [FromQuery] string? Query = null)
@@ -260,6 +362,30 @@ namespace MovieRecommendationApi.Controllers
 			}
 		}
 
+        [HttpGet("recommentdation-movie")]
+        [FirebaseAuthenticationAttribute]
+        public async Task<IActionResult> GetRecommendationMovie([FromQuery] string? genre)
+        {
+            try
+            {
+                var userId = User.GetUserId();
+                if (string.IsNullOrWhiteSpace(genre))
+                {
+                    var res = await dbContext.Movies
+                        .ToListAsync();
+                    return Ok(res);
+                }
+                var res1 = await dbContext.Movies
+                         .Include(x => x.Genres)
+                         .Where(x => x.Genres.Any(g => g.Name.Contains(genre)))
+                         .ToListAsync();
+                return Ok(res1);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 		[HttpGet("recommentdation-movie")]
 		[FirebaseAuthenticationAttribute]
 		public async Task<IActionResult> GetRecommendationMovie([FromQuery]string? genre)
@@ -286,6 +412,20 @@ namespace MovieRecommendationApi.Controllers
 		}
 
 
+        [HttpGet("{id}/movie-review")]
+        public async Task<IActionResult> GetMovieReview(int id, [FromQuery] int Page = 1, [FromQuery] int PageSize = 20)
+        {
+            try
+            {
+                var res = await dbContext.Reviews.Where(x => x.MovieId == id).
+                Skip(PageSize * (Page - 1)).Take(PageSize).ToListAsync();
+                return Ok(res);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 		[HttpGet("{id}/movie-review")]
 		public async Task<IActionResult> GetMovieReview(int id, [FromQuery] int Page = 1, [FromQuery] int PageSize = 20)
 		{
@@ -301,21 +441,29 @@ namespace MovieRecommendationApi.Controllers
 			}
 		}
 
-		[HttpGet("{id}/video-movie")]
-		public async Task<IActionResult> GetVideoMovie(int id, [FromQuery] int Page = 1, [FromQuery] int PageSize = 20)
-		{
-			try
-			{
-				var res = await dbContext.Videos.Where(x => x.IdMovie == id).
-				Skip(PageSize * (Page - 1)).Take(PageSize).ToListAsync();
-				return Ok(res);
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(ex.Message);
-			}
-		}
+        [HttpGet("{id}/video-movie")]
+        public async Task<IActionResult> GetVideoMovie(int id, [FromQuery] int Page = 1, [FromQuery] int PageSize = 20)
+        {
+            try
+            {
+                var res = await dbContext.Videos.Where(x => x.MovieId == id).
+                Skip(PageSize * (Page - 1)).Take(PageSize).ToListAsync();
+                return Ok(res);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
+        [HttpGet("favorite-list")]
+        [FirebaseAuthenticationAttribute]
+        public async Task<IActionResult> GetFavoriteList([FromQuery] int Page = 1, [FromQuery] int PageSize = 20, [FromQuery] string? Query = null)
+        {
+            var userId = User.GetUserId();
+            var res = await dbContext.Users.ToListAsync();
+            return Ok(res);
+        }
 		[HttpGet("favorite-list")]
 		[FirebaseAuthenticationAttribute]
 		public async Task<IActionResult> GetFavoriteList([FromQuery] int Page = 1, [FromQuery] int PageSize = 20, [FromQuery] string? Query = null)
@@ -347,6 +495,33 @@ namespace MovieRecommendationApi.Controllers
 			}
 		}
 
+
+        [HttpPost("favorite-list")]
+        [FirebaseAuthenticationAttribute]
+        public async Task<IActionResult> AddFavoriteList([FromBody] AddFavoriteVM model)
+        {
+            try
+            {
+                var userId = User.GetUserId();
+                List<FavoriteMovie> add = new List<FavoriteMovie>();
+                foreach (var item in model.movies)
+                {
+                    add.Add(new FavoriteMovie()
+                    {
+                        UserId = userId,
+                        MovieId = item
+                    });
+                }
+                await dbContext.FavoriteMovies.AddRangeAsync(add);
+                await dbContext.SaveChangesAsync();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+    }
 		[HttpPost("favorite-list")]
 		[FirebaseAuthenticationAttribute]
 		public async Task<IActionResult> AddFavoriteList([FromBody] AddFavoriteVM model)

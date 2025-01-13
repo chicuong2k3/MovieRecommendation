@@ -1,10 +1,6 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using Microsoft.IdentityModel.Tokens;
 using MovieRecommendationApi.Middlewares;
-using System;
-using System.Text;
 using MovieRecommendationApi.Data;
 using MovieRecommendationApi.DataShaping;
 using Mapster;
@@ -29,7 +25,7 @@ builder.Services.AddSingleton<FirebaseTokenVerifier>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("MyConnection"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("MyConnection"));
 });
 
 

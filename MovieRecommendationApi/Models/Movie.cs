@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MovieRecommendationApi.Data;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
@@ -7,9 +8,13 @@ namespace MovieRecommendationApi.Models
     public class Movie
     {
         [Key]
-        [JsonPropertyName("tmdb_id")]
+        [JsonPropertyName("id")]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { get; set; }
+        [JsonPropertyName("imdb_id")]
+        public string? ImdbId { get; set; }
+        [JsonPropertyName("tmdb_id")]
+        public int? TmdbId { get; set; }
 
         [JsonPropertyName("adult")]
         public bool Adult { get; set; }
@@ -57,10 +62,11 @@ namespace MovieRecommendationApi.Models
         public IList<ProductionCountry>? ProductionCountries { get; set; }
 
         [JsonPropertyName("release_date")]
-        public string? ReleaseDate { get; set; }
+        [JsonConverter(typeof(CustomDateTimeConverter))]
+        public DateTime? ReleaseDate { get; set; }
 
         //[JsonPropertyName("revenue")]
-        //public long? Revenue { get; set; }
+        //public int Revenue { get; set; }
 
         [JsonPropertyName("runtime")]
         public int Runtime { get; set; }
@@ -89,14 +95,17 @@ namespace MovieRecommendationApi.Models
         [JsonPropertyName("credits")]
         public Credit? Credits { get; set; }
 
+        [JsonPropertyName("reviews")]
+        public IList<Review>? Reviews { get; set; }
+        [JsonPropertyName("trailers")]
+        public IList<Video>? Trailers { get; set; }
+
+
         [JsonPropertyName("movie_casts")]
         public IList<MovieCast>? MovieCasts { get; set; }
 
         [JsonPropertyName("rating_lists")]
         public IList<RatingList>? RatingLists { get; set; }
-
-        [JsonPropertyName("reviews")]
-        public IList<Review>? Reviews { get; set; }
 
         [JsonPropertyName("watch_movies")]
         public IList<WatchMovie>? WatchMovies { get; set; }
