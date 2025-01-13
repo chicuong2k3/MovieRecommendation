@@ -9,6 +9,7 @@ using MovieRecommendationApi.Data;
 using MovieRecommendationApi.DataShaping;
 using Mapster;
 using MovieRecommendationApi.Dtos;
+using MovieRecommendationApi.Controllers.AuthenFirebase;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddMiddlewares();
+// Thêm dịch vụ FirebaseTokenVerifier vào DI
+builder.Services.AddSingleton<FirebaseTokenVerifier>();
 //builder.Services.AddScoped<ClaimsTransformationMiddleware>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -29,28 +32,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("MyConnection"));
 });
 
-// Đọc cấu hình JWT từ appsettings
-var jwtSettings = builder.Configuration.GetSection("Jwt");
-
-// Cấu hình dịch vụ xác thực JWT
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]))
-    };
-});
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -122,6 +103,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+
 app.UseCors(builder =>
       builder.WithOrigins("http://localhost:3000")
              .AllowAnyHeader()
@@ -134,6 +116,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+//app.UseMiddleware<FirebaseAuthenticationMiddleware>();
 
 app.UseHttpsRedirection();
 

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MovieRecommendationApi.Common;
+using MovieRecommendationApi.Controllers.AuthenFirebase;
 using MovieRecommendationApi.Data;
 using MovieRecommendationApi.Dtos;
 using MovieRecommendationApi.Models;
@@ -116,8 +117,8 @@ namespace MovieRecommendationApi.Controllers
             return Ok(moviesDto);
         }
 
-
-        [HttpPost("{id}/rate")]
+		[HttpPost("{id}/rate")]
+		[FirebaseAuthenticationAttribute]
         public async Task<IActionResult> AddMovieRating(int id, [FromBody] RateMovieRequest request)
         {
             var userId = User.GetUserId();
@@ -146,7 +147,8 @@ namespace MovieRecommendationApi.Controllers
         }
 
         [HttpPost("watch-list")]
-        public async Task<IActionResult> AddMovieToWatchList([FromBody] AddToWatchListRequest request)
+		[FirebaseAuthenticationAttribute]
+		public async Task<IActionResult> AddMovieToWatchList([FromBody] AddToWatchListRequest request)
         {
             var userId = User.GetUserId();
 
@@ -187,29 +189,27 @@ namespace MovieRecommendationApi.Controllers
         }
 
         [HttpGet("watch-list")]
-        public async Task<IActionResult> GetWatchList([FromQuery] int Page = 1, [FromQuery] int PageSize = 20, [FromQuery] string? Query = null)
+		[FirebaseAuthenticationAttribute]
+		public async Task<IActionResult> GetWatchList([FromQuery] int Page = 1, [FromQuery] int PageSize = 20, [FromQuery] string? Query = null)
 		{
 			try
 			{
 				var userId = User.GetUserId();
                 if(string.IsNullOrWhiteSpace(Query))
                 {
-					var res = await dbContext.Users
+					var res = await dbContext.WatchMovies
 					.Where(x => x.Id == userId)
 					.Skip((Page - 1) * PageSize)
                     .Take(PageSize)
-					.Include(x => x.WatchMovies)
-					.ThenInclude(a => a.Movie)
+					.Select(x => x.Movie)
 					.ToListAsync();
                     return Ok(res);
 				}
-                var res1 = await dbContext.Users
-                    .Where(x => x.Id == userId)
-                    .Skip((Page - 1) * PageSize)
-                    .Take(PageSize)
-                    .Include(x => x.WatchMovies)
-                    .ThenInclude(a => a.Movie)
-					.Where(user => user.WatchMovies.Any(wm => wm.Movie.Title.Contains(Query)))
+				var res1 = await dbContext.WatchMovies
+					.Where(x => x.Id == userId && x.Movie.Title.Contains(Query))
+					.Skip((Page - 1) * PageSize)
+					.Take(PageSize)
+					.Select(x => x.Movie)
 					.ToListAsync();
 				return Ok(res1);
 			}
@@ -219,29 +219,39 @@ namespace MovieRecommendationApi.Controllers
 			}
 		}
 
-        [HttpGet("rating_list")]
-        public async Task<IActionResult> GetRatingList([FromQuery] int Page = 1, [FromQuery] int PageSize = 20, [FromQuery] string? Query = null)
+        [HttpGet("rating-list")]
+		[FirebaseAuthenticationAttribute]
+		public async Task<IActionResult> GetRatingList([FromQuery] int Page = 1, [FromQuery] int PageSize = 20, [FromQuery] string? Query = null)
         {
             try
             {
                 var userId = User.GetUserId();
                 if (string.IsNullOrWhiteSpace(Query))
                 {
-                    var res = await dbContext.Users
-                    .Where(x => x.Id == userId)
-                    .Include(x => x.RatingLists)
-                    .ThenInclude(rl => rl.Rating)
-                    .ToListAsync();
-                    return Ok(res);
+                    var res = await dbContext.RatingLists
+					.Where(x => x.UserId == userId && x.Movie.Title.Contains(Query))
+					.Skip((Page - 1) * PageSize)
+					.Take(PageSize)
+					.Select(rl => new
+					{
+						rating = rl.Rating,
+						movie = rl.Movie,
+					})
+					.ToListAsync();
+					return Ok(res);
 
-				}
-                var res1 = await dbContext.Users
-                    .Where(x => x.Id == userId)
-                    .Include(x => x.RatingLists)
-                    .ThenInclude(rl => rl.Rating)
-                    .Where(x => x.RatingLists.Any(r => r.Movie.Title.Contains(Query)))
-                    .ToListAsync();
-                return Ok(res1);
+                }
+                var res1 = await dbContext.RatingLists
+					.Where(x => x.UserId == userId && x.Movie.Title.Contains(Query))
+					.Skip((Page - 1) * PageSize)
+					.Take(PageSize)
+					.Select(rl => new
+                    {
+                        rating = rl.Rating,
+                        movie = rl.Movie,
+                    })
+					.ToListAsync();
+				return Ok(res1);
             }
             catch(Exception ex )
             {
@@ -250,7 +260,8 @@ namespace MovieRecommendationApi.Controllers
         }
 
         [HttpGet("recommentdation-movie")]
-        public async Task<IActionResult> GetRecommendationMovie([FromQuery]string? genre)
+		[FirebaseAuthenticationAttribute]
+		public async Task<IActionResult> GetRecommendationMovie([FromQuery]string? genre)
         {
             try
             {
