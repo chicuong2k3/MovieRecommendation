@@ -101,16 +101,12 @@ var app = builder.Build();
 
 
 app.UseCors(builder =>
-      builder.WithOrigins("http://localhost:3000")
+      builder.AllowAnyOrigin()
              .AllowAnyHeader()
-             .AllowAnyMethod()
-             .AllowCredentials());
+             .AllowAnyMethod());
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 //app.UseMiddleware<FirebaseAuthenticationMiddleware>();
 
