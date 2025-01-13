@@ -177,7 +177,7 @@ namespace MovieRecommendationApi.Controllers
         {
             try
             {
-				var res = await dbContext.Movies.OrderByDescending(x => x.Popularity).Take(20).ToListAsync();
+				var res = await dbContext.Movies.OrderByDescending(x => x.Popularity).Take(10).ToListAsync();
 				return Ok(res);
 			}
             catch(Exception ex)
