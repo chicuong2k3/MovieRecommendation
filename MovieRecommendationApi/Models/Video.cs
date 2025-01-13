@@ -13,5 +13,7 @@ namespace MovieRecommendationApi.Models
 		public string Type { get; set; }
 		public bool Official { get; set; }
 		public DateOnly PublishedAt { get; set; }
+		public int IdMovie { set; get; }
+		public Movie movie { get; set; }
 	}
 }

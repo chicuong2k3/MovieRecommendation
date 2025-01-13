@@ -186,18 +186,32 @@ namespace MovieRecommendationApi.Controllers
             }
         }
 
-		[HttpGet("watch-list")]
-		public async Task<IActionResult> GetWatchList()
+        [HttpGet("watch-list")]
+        public async Task<IActionResult> GetWatchList([FromQuery] int Page = 1, [FromQuery] int PageSize = 20, [FromQuery] string? Query = null)
 		{
 			try
 			{
 				var userId = User.GetUserId();
-                var res = await dbContext.Users
+                if(string.IsNullOrWhiteSpace(Query))
+                {
+					var res = await dbContext.Users
+					.Where(x => x.Id == userId)
+					.Skip((Page - 1) * PageSize)
+                    .Take(PageSize)
+					.Include(x => x.WatchMovies)
+					.ThenInclude(a => a.Movie)
+					.ToListAsync();
+                    return Ok(res);
+				}
+                var res1 = await dbContext.Users
                     .Where(x => x.Id == userId)
+                    .Skip((Page - 1) * PageSize)
+                    .Take(PageSize)
                     .Include(x => x.WatchMovies)
                     .ThenInclude(a => a.Movie)
-                    .ToListAsync();
-				return Ok(res);
+					.Where(user => user.WatchMovies.Any(wm => wm.Movie.Title.Contains(Query)))
+					.ToListAsync();
+				return Ok(res1);
 			}
 			catch (Exception ex)
 			{
@@ -206,17 +220,28 @@ namespace MovieRecommendationApi.Controllers
 		}
 
         [HttpGet("rating_list")]
-        public async Task<IActionResult> GetRatingList()
+        public async Task<IActionResult> GetRatingList([FromQuery] int Page = 1, [FromQuery] int PageSize = 20, [FromQuery] string? Query = null)
         {
             try
             {
                 var userId = User.GetUserId();
-                var res = await dbContext.Users
+                if (string.IsNullOrWhiteSpace(Query))
+                {
+                    var res = await dbContext.Users
                     .Where(x => x.Id == userId)
                     .Include(x => x.RatingLists)
                     .ThenInclude(rl => rl.Rating)
                     .ToListAsync();
-                return Ok(res);
+                    return Ok(res);
+
+				}
+                var res1 = await dbContext.Users
+                    .Where(x => x.Id == userId)
+                    .Include(x => x.RatingLists)
+                    .ThenInclude(rl => rl.Rating)
+                    .Where(x => x.RatingLists.Any(r => r.Movie.Title.Contains(Query)))
+                    .ToListAsync();
+                return Ok(res1);
             }
             catch(Exception ex )
             {
@@ -225,18 +250,58 @@ namespace MovieRecommendationApi.Controllers
         }
 
         [HttpGet("recommentdation-movie")]
-        public async Task<IActionResult> GetRecommendationMovie()
+        public async Task<IActionResult> GetRecommendationMovie([FromQuery]string? genre)
         {
             try
             {
 				var userId = User.GetUserId();
-                var res = await dbContext.Users
-                return Ok(res);
+                if(string.IsNullOrWhiteSpace(genre))
+                {
+                    var res = await dbContext.Movies
+                        .ToListAsync();
+                    return Ok(res);
+                }
+				var res1 = await dbContext.Movies
+						 .Include(x => x.Genres)
+						 .Where(x => x.Genres.Any(g => g.Name.Contains(genre)))
+						 .ToListAsync();
+				return Ok(res1);
 			}
             catch(Exception ex)
             {
                 return BadRequest(ex.Message);
             }
         }
+
+
+        [HttpGet("{id}/movie-review")]
+        public async Task<IActionResult> GetMovieReview(int id, [FromQuery] int Page = 1, [FromQuery] int PageSize = 20)
+        {
+            try
+            {
+				var res = await dbContext.Reviews.Where(x => x.MovieId == id).
+				Skip(PageSize * (Page - 1)).Take(PageSize).ToListAsync();
+				return Ok(res);
+			}
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+		[HttpGet("{id}/video-movie")]
+		public async Task<IActionResult> GetVideoMovie(int id, [FromQuery] int Page = 1, [FromQuery] int PageSize = 20)
+		{
+			try
+			{
+				var res = await dbContext.Videos.Where(x => x.IdMovie == id).
+				Skip(PageSize * (Page - 1)).Take(PageSize).ToListAsync();
+				return Ok(res);
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(ex.Message);
+			}
+		}
 	}
 }
