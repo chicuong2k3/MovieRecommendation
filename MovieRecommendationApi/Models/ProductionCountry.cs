@@ -12,5 +12,7 @@ namespace MovieRecommendationApi.Models
 
         [JsonPropertyName("name")]
         public string? Name { get; set; }
+
+        public IList<Movie>? Movies { get; set; }
     }
 }

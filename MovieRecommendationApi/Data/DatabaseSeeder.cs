@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MovieRecommendationApi.Models;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace MovieRecommendationApi.Data
 {
@@ -19,7 +20,8 @@ namespace MovieRecommendationApi.Data
 
             if (movies == null || !movies.Any()) return;
 
-            //SeedGenres(context, movies);
+            //SeedGenres(context);
+
             //SeedBelongsToCollections(context, movies);
             //SeedProductionCompanies(context, movies);
             //SeedProductionCountries(context, movies);
@@ -31,17 +33,22 @@ namespace MovieRecommendationApi.Data
 
             //SeedCredits(context, movies);
             //SeedMovies(context, movies);
+
+            //SeedMovieCredits(context);
+
             //SeedSimilarMovies(context);
+
+            SeedReviews(context, movies);
 
             Console.WriteLine("Database seeding complete.");
         }
 
-        private static void SeedGenres(AppDbContext context, List<Movie> movies)
+        private static void SeedGenres(AppDbContext context)
         {
-            var genres = movies
-                .SelectMany(m => m.Genres ?? new List<Genre>())
-                .DistinctBy(g => g.Id)
-                .ToList();
+            var jsonData = File.ReadAllText("tmdb_db.movie_genres.json");
+            var genres = JsonSerializer.Deserialize<List<Genre>>(jsonData);
+
+            if (genres == null || !genres.Any()) return;
 
             foreach (var genre in genres)
             {
@@ -58,15 +65,15 @@ namespace MovieRecommendationApi.Data
         {
             var collections = movies
                 .Where(m => m.BelongsToCollection != null)
-                .Select(m => m.BelongsToCollection)
+                .Select(m => m.BelongsToCollection).Take(500)
                 .DistinctBy(c => c.Id)
                 .ToList();
 
             foreach (var collection in collections)
             {
-                if (!context.BelongsToCollections.Any(c => c.Id == collection.Id))
+                if (!context.BelongsToCollections.Any(c => c.Id == collection!.Id))
                 {
-                    context.BelongsToCollections.Add(collection);
+                    context.BelongsToCollections.Add(collection!);
                 }
             }
 
@@ -134,7 +141,7 @@ namespace MovieRecommendationApi.Data
                 .Select(m => m.Credits)
                 .Where(c => c != null)
                 .DistinctBy(c => c.Id)
-                .Take(100)
+                .Take(200)
                 .ToList();
 
             // Fetch all existing People IDs into a HashSet for fast lookups
@@ -147,8 +154,8 @@ namespace MovieRecommendationApi.Data
                 {
                     if (credit.Cast != null)
                     {
-                        var castIds = credit.Cast.Select(c => c.Id);
-                        credit.Cast = existingPeople.Where(x => castIds.Contains(x.Id)).ToList();
+                        var castIds = credit.Cast.Select(c => c.IdForCrawling);
+                        credit.Cast = existingPeople.Where(x => castIds.Contains(x.IdForCrawling)).ToList();
                     }
 
                     // Add the credit
@@ -168,7 +175,7 @@ namespace MovieRecommendationApi.Data
         private static void SeedVideos(AppDbContext context, List<Movie> movies)
         {
             var videos = movies
-                .SelectMany(m => m.Trailers ?? new List<Video>())
+                .SelectMany(m => m.Videos ?? new List<Video>())
                 .DistinctBy(v => v.Id).Take(500)
                 .ToList();
 
@@ -202,7 +209,7 @@ namespace MovieRecommendationApi.Data
                 if (!context.Movies.Any(m => m.Id == movie.Id))
                 {
                     // Get related genre IDs
-                    var genreIds = movie.Genres?.Select(x => x.Id).ToList() ?? new List<int>();
+                    var genreIds = movie.Genres?.Select(x => x.IdForCrawling).ToList();
 
                     // Handle other relationships similarly if needed, e.g. collections, production companies, etc.
                     var collectionId = movie.BelongsToCollection?.Id;
@@ -210,21 +217,21 @@ namespace MovieRecommendationApi.Data
                     var companiesIds = movie.ProductionCompanies?.Select(x => x.Id).ToList();
                     var languageIds = movie.SpokenLanguages?.Select(x => x.Id).ToList();
                     var creditId = movie.Credits?.Id;
-                    var trailerIds = movie.Trailers?.Select(x => x.Id).ToList();
+                    var trailerIds = movie.Videos?.Select(x => x.Id).ToList();
 
-                    movie.Genres = genres.Where(x => genreIds.Contains(x.Id)).ToList();
+                    movie.Genres = genres.Where(x => genreIds.Contains(x.IdForCrawling)).ToList();
                     movie.BelongsToCollection = collections.Where(x => collectionId == x.Id).FirstOrDefault();
                     movie.ProductionCompanies = productCompanies.Where(x => companiesIds != null && companiesIds.Contains(x.Id)).ToList();
                     movie.ProductionCountries = productCountries.Where(x => countryIds != null && countryIds.Contains(x.Id)).ToList();
                     movie.SpokenLanguages = spokenLanguages.Where(x => languageIds != null && languageIds.Contains(x.Id)).ToList();
                     movie.Credits = credits.Where(x => creditId == x.Id).FirstOrDefault();
-                    movie.Trailers = trailers.Where(x => trailerIds != null && trailerIds.Contains(x.Id)).ToList();
+                    movie.Videos = trailers.Where(x => trailerIds != null && trailerIds.Contains(x.Id)).ToList();
 
                     // Add the movie and related entities
                     context.Movies.Add(movie);
                 }
 
-                if (i >= 200)
+                if (i >= 1000)
                 {
                     break;
                 }
@@ -235,9 +242,6 @@ namespace MovieRecommendationApi.Data
             // Save the changes to the database
             context.SaveChanges();
         }
-
-
-
 
 
         private static void SeedPeople(AppDbContext context)
@@ -270,17 +274,14 @@ namespace MovieRecommendationApi.Data
                     existingPerson.Popularity = person.Popularity;
                     existingPerson.ProfilePath = person.ProfilePath;
 
-                    if (person.MovieCredits != null)
-                    {
-                        existingPerson.MovieCredits = person.MovieCredits;
-                    }
                 }
                 else
                 {
+                    person.MovieCredits = null;
                     context.People.Add(person);
                 }
 
-                if (context.ChangeTracker.Entries().Count() > 100)
+                if (context.ChangeTracker.Entries().Count() > 500)
                 {
                     context.SaveChanges();
                     context.ChangeTracker.Clear();
@@ -290,6 +291,44 @@ namespace MovieRecommendationApi.Data
             context.SaveChanges();
         }
 
+
+        private static void SeedMovieCredits(AppDbContext context)
+        {
+            var jsonData = File.ReadAllText("tmdb_db.people.json");
+            var people = JsonSerializer.Deserialize<List<Person>>(jsonData);
+
+            if (people == null || !people.Any()) return;
+
+            // Extract unique credits from the movies list
+            var movieCredits = people
+                .Select(m => m.MovieCredits)
+                .Where(c => c != null)
+                .Take(200)
+                .ToList();
+
+            var existingMovie = context.Movies;
+
+            foreach (var movieCredit in movieCredits)
+            {
+                // Check if the credit already exists
+                if (!context.MovieCredits.Any(c => c.Id == movieCredit.Id))
+                {
+                    if (movieCredit.Cast != null)
+                    {
+                        var castTitles = movieCredit.Cast.Select(c => c.Title.ToLower());
+                        movieCredit.Cast = existingMovie.Where(x => castTitles.Contains(x.Title.ToLower())).ToList();
+                    }
+
+                    // Add the credit
+                    context.MovieCredits.Add(movieCredit);
+
+
+                    context.SaveChanges();
+                }
+            }
+
+
+        }
 
 
         private static void SeedSimilarMovies(AppDbContext context)
@@ -308,13 +347,13 @@ namespace MovieRecommendationApi.Data
 
                 foreach (var similarMovie in item.SimilarMovies)
                 {
-                    var similarMovieEntity = context.Movies.FirstOrDefault(m => m.Id == similarMovie.Id);
+                    var similarMovieEntity = context.Movies.FirstOrDefault(m => m.Title.ToLower() == similarMovie.Title.ToLower());
                     if (similarMovieEntity == null) continue;
 
                     var similarMovieRelation = new SimilarMovie
                     {
                         MovieId = movie.Id,
-                        SimilarMovieId = similarMovie.Id
+                        SimilarMovieId = similarMovieEntity.Id
                     };
 
                     context.SimilarMovies.Add(similarMovieRelation);
@@ -330,5 +369,91 @@ namespace MovieRecommendationApi.Data
             context.SaveChanges();
         }
 
+
+        private static void SeedReviews(AppDbContext context, List<Movie> movies)
+        {
+            var reviews = movies
+                .Take(500)
+                .SelectMany(movie => movie.ReviewModels?.Select(review => (movie.Id, review))
+                             ?? Enumerable.Empty<(string MovieId, ReviewModel ReviewModel)>())
+                .ToList();
+
+            foreach (var reviewData in reviews)
+            {
+                var reviewModel = reviewData.Item2;
+                var movieId = reviewData.Item1;
+
+                if (reviewModel == null)
+                {
+                    continue;
+                }
+
+                var user = context.Users
+                    .Where(u => reviewModel.AuthorDetails != null && u.Email == reviewModel.AuthorDetails.UserName)
+                    .FirstOrDefault();
+
+                if (user == null)
+                {
+                    user = new User
+                    {
+                        Email = reviewModel.AuthorDetails?.UserName,
+                        AvatarPath = reviewModel.AuthorDetails?.AvatarPath,
+                        Name = reviewModel.AuthorDetails?.Name ?? reviewModel.Author
+                    };
+
+                    context.Users.Add(user);
+                    context.SaveChanges();
+                }
+
+                var review = new Review
+                {
+                    Id = reviewModel.Id,
+                    User = user,
+                    MovieId = movieId, // Assign the MovieId here
+                    Content = reviewModel.Content,
+                    CreatedAt = reviewModel.CreatedAt,
+                    UpdatedAt = reviewModel.UpdatedAt,
+                    Url = reviewModel.Url,
+                    Rating = reviewModel.AuthorDetails?.Rating ?? 5
+                };
+
+                context.Reviews.Add(review); // Add the review to the context
+            }
+
+            context.SaveChanges(); // Save all changes in one batch
+        }
+
+    }
+
+    public class ReviewModel
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = default!;
+        [JsonPropertyName("content")]
+        public string? Content { get; set; }
+        [JsonPropertyName("created_at")]
+        public DateTime? CreatedAt { get; set; }
+        [JsonPropertyName("updated_at")]
+        public DateTime? UpdatedAt { get; set; }
+        [JsonPropertyName("url")]
+        public string? Url { get; set; }
+
+        [JsonPropertyName("author")]
+        public string? Author { get; set; }
+        [JsonPropertyName("author_details")]
+        public AuthorDetails? AuthorDetails { get; set; }
+    }
+
+    public class AuthorDetails
+    {
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+        [JsonPropertyName("username")]
+        public string? UserName { get; set; }
+        [JsonPropertyName("avatar_path")]
+        public string? AvatarPath { get; set; }
+        [JsonPropertyName("rating")]
+        [JsonConverter(typeof(NullableIntConverter))]
+        public int? Rating { get; set; }
     }
 }

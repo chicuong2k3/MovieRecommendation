@@ -1,4 +1,4 @@
 ﻿namespace MovieRecommendationApi.Requests
 {
-    public record AddToWatchListRequest(int MovieId);
+    public record AddToWatchListRequest(string MovieId);
 }

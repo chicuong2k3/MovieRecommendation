@@ -53,7 +53,7 @@ namespace MovieRecommendationApi.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(string id)
         {
             var movie = await dbContext.Movies
                 .Where(x => x.Id == id)
@@ -90,15 +90,15 @@ namespace MovieRecommendationApi.Controllers
                     x.Genres.Any(g => request.GenreIds.Contains(g.Id)));
             }
 
-            if (request.Ratings != null && request.Ratings.Any())
-            {
-                var movieIds = await dbContext.RatingLists
-                    .Where(x => request.Ratings.Contains(x.Rating))
-                    .Select(x => x.MovieId)
-                    .ToListAsync();
+            //if (request.Ratings != null && request.Ratings.Any())
+            //{
+            //    var movieIds = await dbContext.RatingLists
+            //        .Where(x => request.Ratings.Contains(x.Rating))
+            //        .Select(x => x.MovieId)
+            //        .ToListAsync();
 
-                movies = movies.Where(x => movieIds.Contains(x.Id));
-            }
+            //    movies = movies.Where(x => movieIds.Contains(x.Id));
+            //}
 
             if (request.ReleaseYearFrom != null && request.ReleaseYearTo != null)
             {
@@ -147,34 +147,34 @@ namespace MovieRecommendationApi.Controllers
             return Ok(moviesDto);
         }
 
-        [HttpPost("{id}/rate")]
-        [FirebaseAuthenticationAttribute]
-        public async Task<IActionResult> AddMovieRating(int id, [FromBody] RateMovieRequest request)
-        {
-            var userId = User.GetUserId();
+        //[HttpPost("{id}/rate")]
+        //[FirebaseAuthenticationAttribute]
+        //public async Task<IActionResult> AddMovieRating(string id, [FromBody] RateMovieRequest request)
+        //{
+        //    var userId = User.GetUserId();
 
-            var movie = await dbContext.Movies
-                .Where(x => x.Id == id)
-                .FirstOrDefaultAsync();
+        //    var movie = await dbContext.Movies
+        //        .Where(x => x.Id == id)
+        //        .FirstOrDefaultAsync();
 
-            if (movie == null)
-            {
-                var error = ErrorResponse.Create("Movie not found", "movie_not_found", HttpStatusCode.NotFound);
-                return error.MapErrorResponse();
-            }
+        //    if (movie == null)
+        //    {
+        //        var error = ErrorResponse.Create("Movie not found", "movie_not_found", HttpStatusCode.NotFound);
+        //        return error.MapErrorResponse();
+        //    }
 
-            var ratingList = new RatingList
-            {
-                MovieId = id,
-                Rating = request.Rating,
-                UserId = userId
-            };
+        //    var ratingList = new RatingList
+        //    {
+        //        MovieId = id,
+        //        Rating = request.Rating,
+        //        UserId = userId
+        //    };
 
-            dbContext.RatingLists.Add(ratingList);
-            await dbContext.SaveChangesAsync();
+        //    dbContext.RatingLists.Add(ratingList);
+        //    await dbContext.SaveChangesAsync();
 
-            return Ok();
-        }
+        //    return Ok();
+        //}
 
 
         [HttpPost("watch-list")]
@@ -251,45 +251,45 @@ namespace MovieRecommendationApi.Controllers
         }
 
 
-        [HttpGet("rating-list")]
-        [FirebaseAuthenticationAttribute]
-        public async Task<IActionResult> GetRatingList([FromQuery] int Page = 1, [FromQuery] int PageSize = 20, [FromQuery] string? Query = null)
-        {
-            try
-            {
-                var userId = User.GetUserId();
-                if (string.IsNullOrWhiteSpace(Query))
-                {
-                    var res = await dbContext.RatingLists
-                    .Where(x => x.UserId == userId && x.Movie.Title.Contains(Query))
-                    .Skip((Page - 1) * PageSize)
-                    .Take(PageSize)
-                    .Select(rl => new
-                    {
-                        rating = rl.Rating,
-                        movie = rl.Movie,
-                    })
-                    .ToListAsync();
-                    return Ok(res);
+        //[HttpGet("rating-list")]
+        //[FirebaseAuthenticationAttribute]
+        //public async Task<IActionResult> GetRatingList([FromQuery] int Page = 1, [FromQuery] int PageSize = 20, [FromQuery] string? Query = null)
+        //{
+        //    try
+        //    {
+        //        var userId = User.GetUserId();
+        //        if (string.IsNullOrWhiteSpace(Query))
+        //        {
+        //            var res = await dbContext.RatingLists
+        //            .Where(x => x.UserId == userId && x.Movie.Title.Contains(Query))
+        //            .Skip((Page - 1) * PageSize)
+        //            .Take(PageSize)
+        //            .Select(rl => new
+        //            {
+        //                rating = rl.Rating,
+        //                movie = rl.Movie,
+        //            })
+        //            .ToListAsync();
+        //            return Ok(res);
 
-                }
-                var res1 = await dbContext.RatingLists
-                    .Where(x => x.UserId == userId && x.Movie.Title.Contains(Query))
-                    .Skip((Page - 1) * PageSize)
-                    .Take(PageSize)
-                    .Select(rl => new
-                    {
-                        rating = rl.Rating,
-                        movie = rl.Movie,
-                    })
-                    .ToListAsync();
-                return Ok(res1);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
+        //        }
+        //        var res1 = await dbContext.RatingLists
+        //            .Where(x => x.UserId == userId && x.Movie.Title.Contains(Query))
+        //            .Skip((Page - 1) * PageSize)
+        //            .Take(PageSize)
+        //            .Select(rl => new
+        //            {
+        //                rating = rl.Rating,
+        //                movie = rl.Movie,
+        //            })
+        //            .ToListAsync();
+        //        return Ok(res1);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(ex.Message);
+        //    }
+        //}
 
         [HttpGet("recommentdation-movie")]
         [FirebaseAuthenticationAttribute]
@@ -312,7 +312,7 @@ namespace MovieRecommendationApi.Controllers
 
 
         [HttpGet("{id}/movie-review")]
-        public async Task<IActionResult> GetMovieReview(int id, [FromQuery] int Page = 1, [FromQuery] int PageSize = 20)
+        public async Task<IActionResult> GetMovieReview(string id, [FromQuery] int Page = 1, [FromQuery] int PageSize = 20)
         {
             try
             {
@@ -332,7 +332,7 @@ namespace MovieRecommendationApi.Controllers
         }
 
         [HttpGet("{id}/video-movie")]
-        public async Task<IActionResult> GetVideoMovie(int id, [FromQuery] int Page = 1, [FromQuery] int PageSize = 20)
+        public async Task<IActionResult> GetVideoMovie(string id, [FromQuery] int Page = 1, [FromQuery] int PageSize = 20)
         {
             try
             {
@@ -426,7 +426,7 @@ namespace MovieRecommendationApi.Controllers
         }
 
         [HttpGet("list-genre-by-id")]
-        public async Task<IActionResult> GetGenres([FromQuery] List<int> genre_ids)
+        public async Task<IActionResult> GetGenres([FromQuery] List<string> genre_ids)
         {
             if (genre_ids == null || !genre_ids.Any())
             {
@@ -450,6 +450,6 @@ namespace MovieRecommendationApi.Controllers
 
     public class AddFavoriteVM
     {
-        public List<int> movies { set; get; }
+        public List<string> movies { set; get; }
     }
 }

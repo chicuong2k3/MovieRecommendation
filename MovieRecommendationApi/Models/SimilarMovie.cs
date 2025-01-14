@@ -5,9 +5,9 @@ namespace MovieRecommendationApi.Models
 {
     public class SimilarMovie
     {
-        public int MovieId { get; set; }
+        public string MovieId { get; set; } = default!;
         public Movie Movie { get; set; } = default!;
-        public int SimilarMovieId { get; set; }
+        public string SimilarMovieId { get; set; } = default!;
         public Movie SimilarMovieEntity { get; set; } = default!;
 
     }

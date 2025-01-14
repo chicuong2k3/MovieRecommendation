@@ -2,7 +2,7 @@
 {
     public class PersonDto
     {
-        public int Id { get; set; }
+        public string Id { get; set; } = default!;
         public bool Adult { get; set; }
         public List<string>? AlsoKnownAs { get; set; }
         public string? ImdbId { get; set; }

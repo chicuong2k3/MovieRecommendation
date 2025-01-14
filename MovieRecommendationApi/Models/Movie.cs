@@ -8,9 +8,10 @@ namespace MovieRecommendationApi.Models
     public class Movie
     {
         [Key]
-        [JsonPropertyName("id")]
+        [JsonPropertyName("_id")]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        public int Id { get; set; }
+        [JsonConverter(typeof(ObjectIdConverter))]
+        public string Id { get; set; } = default!;
         [JsonPropertyName("imdb_id")]
         public string? ImdbId { get; set; }
         [JsonPropertyName("tmdb_id")]
@@ -96,23 +97,13 @@ namespace MovieRecommendationApi.Models
         public Credit? Credits { get; set; }
 
         [JsonPropertyName("reviews")]
+        [NotMapped]
+        public IList<ReviewModel>? ReviewModels { get; set; }
         public IList<Review>? Reviews { get; set; }
-        [JsonPropertyName("trailers")]
-        public IList<Video>? Trailers { get; set; }
 
-
-        [JsonPropertyName("movie_casts")]
-        public IList<MovieCast>? MovieCasts { get; set; }
-
-        [JsonPropertyName("rating_lists")]
-        public IList<RatingList>? RatingLists { get; set; }
-
-        [JsonPropertyName("watch_movies")]
         public IList<WatchMovie>? WatchMovies { get; set; }
-
-        [JsonPropertyName("favorite_movies")]
         public IList<FavoriteMovie>? FavoriteMovies { get; set; }
-
-		public IList<Video>? Videos { get; set; }
-	}
+        [JsonPropertyName("trailers")]
+        public IList<Video>? Videos { get; set; }
+    }
 }

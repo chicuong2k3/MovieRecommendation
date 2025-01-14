@@ -4,7 +4,7 @@ namespace MovieRecommendationApi.Dtos
 {
     public class MovieDto
     {
-        public int Id { get; set; }
+        public string Id { get; set; } = default!;
         public bool Adult { get; set; }
         public string? ImdbId { get; set; }
         public int? TmdbId { get; set; }

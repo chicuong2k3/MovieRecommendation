@@ -24,7 +24,7 @@ namespace MovieRecommendationApi.Models
         [JsonPropertyName("published_at")]
         public DateTime? PublishedAt { get; set; }
 
-        public int? MovieId { set; get; }
+        public string? MovieId { set; get; }
         public Movie? Movie { get; set; }
     }
 }
