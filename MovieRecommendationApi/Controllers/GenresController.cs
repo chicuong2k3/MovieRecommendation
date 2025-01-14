@@ -33,5 +33,7 @@ namespace MovieRecommendationApi.Controllers
             var genres = await dbContext.Genres.ToListAsync();
             return Ok(genres.Adapt<List<GenreDto>>(mapper.Config));
         }
+
+
     }
 }

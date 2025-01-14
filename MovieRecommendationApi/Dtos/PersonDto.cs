@@ -17,6 +17,6 @@
         public string? PlaceOfBirth { get; set; }
         public double Popularity { get; set; }
         public string? ProfilePath { get; set; }
-        public int? CreditId { get; set; }
+        public MovieCreditDto? MovieCredit { get; set; }
     }
 }

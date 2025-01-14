@@ -53,8 +53,9 @@ namespace MovieRecommendationApi.Models
 
         [JsonPropertyName("profile_path")]
         public string? ProfilePath { get; set; }
+        public int? MovieCreditId { get; set; }
 
         [JsonPropertyName("movie_credits")]
-        public MovieCredit? MovieCredits { get; set; }
+        public MovieCredit? MovieCredit { get; set; }
     }
 }

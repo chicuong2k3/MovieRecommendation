@@ -9,20 +9,17 @@ namespace MovieRecommendationApi.Requests
             int PageSize = 10,
             string? Query = null,
             List<string>? GenreIds = null,
-            List<int>? Ratings = null,
             int? ReleaseYearFrom = null,
             int? ReleaseYearTo = null) : base(Page, PageSize)
         {
             this.Query = Query;
             this.GenreIds = GenreIds;
-            this.Ratings = Ratings;
             this.ReleaseYearFrom = ReleaseYearFrom;
             this.ReleaseYearTo = ReleaseYearTo;
         }
 
         public string? Query { get; init; }
         public List<string>? GenreIds { get; init; }
-        public List<int>? Ratings { get; init; }
 
         public int? ReleaseYearFrom { get; init; }
         public int? ReleaseYearTo { get; init; }

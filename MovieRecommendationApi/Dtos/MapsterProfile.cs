@@ -23,7 +23,7 @@ namespace MovieRecommendationApi.Dtos
                 .Map(dest => dest.PlaceOfBirth, src => src.PlaceOfBirth)
                 .Map(dest => dest.Popularity, src => src.Popularity)
                 .Map(dest => dest.ProfilePath, src => src.ProfilePath)
-                .Map(dest => dest.CreditId, src => src.MovieCredits != null ? src.MovieCredits.Id : (int?)null);
+                .Map(dest => dest.MovieCredit, src => src.MovieCredit);
 
             config.NewConfig<Movie, MovieDto>()
                 .Map(dest => dest.Id, src => src.Id)
@@ -90,6 +90,25 @@ namespace MovieRecommendationApi.Dtos
             config.NewConfig<Credit, CreditDto>()
                 .Map(dest => dest.Id, src => src.Id)
                 .Map(dest => dest.Cast, src => src.Cast);
+
+            config.NewConfig<Review, ReviewDto>()
+                .Map(dest => dest.Id, src => src.Id)
+                .Map(dest => dest.UserId, src => src.UserId)
+                .Map(dest => dest.MovieId, src => src.MovieId)
+                .Map(dest => dest.Content, src => src.Content)
+                .Map(dest => dest.CreatedAt, src => src.CreatedAt)
+                .Map(dest => dest.UpdatedAt, src => src.UpdatedAt)
+                .Map(dest => dest.Url, src => src.Url)
+                .Map(dest => dest.Url, src => src.Url)
+                .Map(dest => dest.Url, src => src.Url)
+                .Map(dest => dest.Rating, src => src.Rating)
+                .Map(dest => dest.AuthorDetails, src => src.User);
+
+            config.NewConfig<User, UserDto>()
+                .Map(dest => dest.Id, src => src.Id)
+                .Map(dest => dest.Username, src => src.Email)
+                .Map(dest => dest.Name, src => src.Name)
+                .Map(dest => dest.AvatarPath, src => src.AvatarPath);
         }
     }
 }

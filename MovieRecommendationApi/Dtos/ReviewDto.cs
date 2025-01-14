@@ -12,5 +12,7 @@ namespace MovieRecommendationApi.Dtos
         public DateTime? UpdatedAt { get; set; }
         public string? Url { get; set; }
         public int Rating { get; set; }
+
+        public UserDto? AuthorDetails { get; set; }
     }
 }

@@ -31,14 +31,14 @@ namespace MovieRecommendationApi.Data
 
             //SeedPeople(context);
 
-            //SeedCredits(context, movies);
+            // SeedCredits(context, movies);
             //SeedMovies(context, movies);
 
             //SeedMovieCredits(context);
 
             //SeedSimilarMovies(context);
 
-            SeedReviews(context, movies);
+            //SeedReviews(context, movies);
 
             Console.WriteLine("Database seeding complete.");
         }
@@ -277,7 +277,7 @@ namespace MovieRecommendationApi.Data
                 }
                 else
                 {
-                    person.MovieCredits = null;
+                    person.MovieCredit = null;
                     context.People.Add(person);
                 }
 
@@ -299,11 +299,12 @@ namespace MovieRecommendationApi.Data
 
             if (people == null || !people.Any()) return;
 
+
             // Extract unique credits from the movies list
             var movieCredits = people
-                .Select(m => m.MovieCredits)
+                .Select(m => m.MovieCredit)
                 .Where(c => c != null)
-                .Take(200)
+                .Take(500)
                 .ToList();
 
             var existingMovie = context.Movies;

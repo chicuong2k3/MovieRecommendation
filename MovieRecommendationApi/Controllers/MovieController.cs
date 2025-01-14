@@ -108,6 +108,16 @@ namespace MovieRecommendationApi.Controllers
                     x.ReleaseDate.Value.Year >= request.ReleaseYearFrom
                     && x.ReleaseDate.Value.Year <= request.ReleaseYearTo);
             }
+            else if (request.ReleaseYearFrom != null)
+            {
+                movies = movies.Where(x => x.ReleaseDate != null &&
+                    x.ReleaseDate.Value.Year >= request.ReleaseYearFrom);
+            }
+            else if (request.ReleaseYearTo != null)
+            {
+                movies = movies.Where(x => x.ReleaseDate != null &&
+                    x.ReleaseDate.Value.Year <= request.ReleaseYearTo);
+            }
 
             var count = await movies.CountAsync();
 
@@ -209,6 +219,8 @@ namespace MovieRecommendationApi.Controllers
                 Rating = request.Rating,
                 Content = request.Content
             };
+
+            dbContext.Reviews.Add(review);
 
             await dbContext.SaveChangesAsync();
 
@@ -326,49 +338,43 @@ namespace MovieRecommendationApi.Controllers
         [FirebaseAuthenticationAttribute]
         public async Task<IActionResult> GetRatingList([FromQuery] int Page = 1, [FromQuery] int PageSize = 20, [FromQuery] string? Query = null)
         {
-            try
+            var userId = User.GetUserId();
+            if (string.IsNullOrWhiteSpace(Query))
             {
-                var userId = User.GetUserId();
-                if (string.IsNullOrWhiteSpace(Query))
+                var totalRes = await dbContext.Reviews
+                .Where(x => x.UserId == userId).ToListAsync();
+
+                var res = totalRes
+                .Skip((Page - 1) * PageSize)
+                .Take(PageSize)
+                .Select(rl => new
                 {
-                    var totalRes = await dbContext.Reviews
-                    .Where(x => x.UserId == userId).ToListAsync();
-
-                    var res = totalRes
-                    .Skip((Page - 1) * PageSize)
-                    .Take(PageSize)
-                    .Select(rl => new
-                    {
-                        rating = rl.Rating,
-                        movie = rl.Movie,
-                    });
-                    return Ok(new
-                    {
-                        data = res,
-                        totalPages = (int)Math.Ceiling((double)totalRes.Count / PageSize)
-                    });
-
-                }
-                var totalRes1 = await dbContext.Reviews
-                    .Where(x => x.UserId == userId && x.Movie.Title.Contains(Query)).ToListAsync();
-                var res1 = totalRes1
-                    .Skip((Page - 1) * PageSize)
-                    .Take(PageSize)
-                    .Select(rl => new
-                    {
-                        rating = rl.Rating,
-                        movie = rl.Movie,
-                    });
+                    rating = rl.Rating,
+                    movie = rl.Movie,
+                });
                 return Ok(new
                 {
-                    data = res1,
-                    totalPages = (int)Math.Ceiling((double)totalRes1.Count / PageSize)
+                    data = res,
+                    totalPages = (int)Math.Ceiling((double)totalRes.Count / PageSize)
                 });
+
             }
-            catch (Exception ex)
+            var totalRes1 = await dbContext.Reviews
+                .Where(x => x.UserId == userId && x.Movie.Title.Contains(Query)).ToListAsync();
+            var res1 = totalRes1
+                .Skip((Page - 1) * PageSize)
+                .Take(PageSize)
+                .Select(rl => new
+                {
+                    rating = rl.Rating,
+                    movie = rl.Movie,
+                });
+
+            return Ok(new
             {
-                return BadRequest(ex.Message);
-            }
+                data = res1,
+                totalPages = (int)Math.Ceiling((double)totalRes1.Count / PageSize)
+            });
         }
 
         [HttpGet("recommentdation-movie")]
@@ -409,7 +415,10 @@ namespace MovieRecommendationApi.Controllers
                 return error.MapErrorResponse();
             }
 
-            var totalRes = await dbContext.Reviews.Where(x => x.MovieId == id).ToListAsync();
+            var totalRes = await dbContext.Reviews
+                .Where(x => x.MovieId == id)
+                .Include(x => x.User)
+                .ToListAsync();
 
             var res = totalRes.Skip(PageSize * (Page - 1)).Take(PageSize);
 
@@ -495,7 +504,7 @@ namespace MovieRecommendationApi.Controllers
         {
             var userId = User.GetUserId();
             List<FavoriteMovie> add = new List<FavoriteMovie>();
-            foreach (var item in model.movies)
+            foreach (var item in model.Movies)
             {
                 add.Add(new FavoriteMovie()
                 {
@@ -563,6 +572,6 @@ namespace MovieRecommendationApi.Controllers
 
     public class AddFavoriteVM
     {
-        public List<string> movies { set; get; }
+        public List<string>? Movies { set; get; }
     }
 }
