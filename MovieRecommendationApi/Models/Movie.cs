@@ -100,8 +100,8 @@ namespace MovieRecommendationApi.Models
         [NotMapped]
         public IList<ReviewModel>? ReviewModels { get; set; }
 
-		[JsonIgnore]
-		public IList<Review>? Reviews { get; set; }
+        [JsonIgnore]
+        public IList<Review>? Reviews { get; set; }
 
         public IList<WatchMovie>? WatchMovies { get; set; }
         public IList<FavoriteMovie>? FavoriteMovies { get; set; }
