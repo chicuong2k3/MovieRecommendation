@@ -101,8 +101,8 @@ namespace MovieRecommendationApi.Dtos
                 .Map(dest => dest.Url, src => src.Url)
                 .Map(dest => dest.Url, src => src.Url)
                 .Map(dest => dest.Url, src => src.Url)
-                .Map(dest => dest.Rating, src => src.Rating)
-                .Map(dest => dest.AuthorDetails, src => src.User);
+                //.Map(dest => dest.AuthorDetails, src => src.User)
+                .Map(dest => dest.Rating, src => src.Rating);
 
             config.NewConfig<User, UserDto>()
                 .Map(dest => dest.Id, src => src.Id)

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MovieRecommendationApi.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MovieRecommendationApi.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250114134844_MigrationName2")]
+    partial class MigrationName2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -164,7 +167,7 @@ namespace MovieRecommendationApi.Data.Migrations
                         .HasColumnType("text[]")
                         .HasAnnotation("Relational:JsonPropertyName", "categories");
 
-                    b.Property<int?>("CreditId")
+                    b.Property<int?>("CreditsId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Homepage")
@@ -242,7 +245,7 @@ namespace MovieRecommendationApi.Data.Migrations
 
                     b.HasIndex("BelongsToCollectionId");
 
-                    b.HasIndex("CreditId");
+                    b.HasIndex("CreditsId");
 
                     b.HasIndex("MovieCreditId");
 
@@ -613,9 +616,9 @@ namespace MovieRecommendationApi.Data.Migrations
                         .WithMany()
                         .HasForeignKey("BelongsToCollectionId");
 
-                    b.HasOne("MovieRecommendationApi.Models.Credit", "Credit")
+                    b.HasOne("MovieRecommendationApi.Models.Credit", "Credits")
                         .WithMany()
-                        .HasForeignKey("CreditId");
+                        .HasForeignKey("CreditsId");
 
                     b.HasOne("MovieRecommendationApi.Models.MovieCredit", null)
                         .WithMany("Cast")
@@ -623,7 +626,7 @@ namespace MovieRecommendationApi.Data.Migrations
 
                     b.Navigation("BelongsToCollection");
 
-                    b.Navigation("Credit");
+                    b.Navigation("Credits");
                 });
 
             modelBuilder.Entity("MovieRecommendationApi.Models.Person", b =>

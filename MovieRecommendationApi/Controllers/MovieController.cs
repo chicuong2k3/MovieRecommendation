@@ -196,26 +196,27 @@ namespace MovieRecommendationApi.Controllers
                 return error.MapErrorResponse();
             }
 
-            var user = await dbContext.Users
-                .Where(x => x.Id == userId)
-                .FirstOrDefaultAsync();
+            //var user = await dbContext.Users
+            //    .Where(x => x.Id == userId)
+            //    .FirstOrDefaultAsync();
 
 
-            if (user == null)
-            {
-                user = new User()
-                {
-                    Id = userId,
-                    Email = request.Username,
-                    Name = request.Username,
-                    AvatarPath = request.AvatarPath
-                };
-            }
+            //if (user == null)
+            //{
+            //    user = new User()
+            //    {
+            //        Id = userId,
+            //        Email = request.Username,
+            //        Name = request.Username,
+            //        AvatarPath = request.AvatarPath
+            //    };
+            //}
 
             var review = new Review
             {
+                Id = Guid.NewGuid().ToString(),
                 MovieId = id,
-                User = user,
+                UserId = userId,
                 Rating = request.Rating,
                 Content = request.Content
             };
@@ -417,7 +418,6 @@ namespace MovieRecommendationApi.Controllers
 
             var totalRes = await dbContext.Reviews
                 .Where(x => x.MovieId == id)
-                .Include(x => x.User)
                 .ToListAsync();
 
             var res = totalRes.Skip(PageSize * (Page - 1)).Take(PageSize);
