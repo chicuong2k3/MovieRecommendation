@@ -100,11 +100,11 @@ namespace MovieRecommendationApi.Controllers
                 movies = movies.Where(x => movieIds.Contains(x.Id));
             }
 
-            if (request.ReleaseDateFrom != null && request.RealeaseDateTo != null)
+            if (request.ReleaseYearFrom != null && request.ReleaseYearTo != null)
             {
-                movies = movies.Where(x =>
-                    x.ReleaseDate >= request.ReleaseDateFrom
-                    && x.ReleaseDate <= request.RealeaseDateTo);
+                movies = movies.Where(x => x.ReleaseDate != null &&
+                    x.ReleaseDate.Value.Year >= request.ReleaseYearFrom
+                    && x.ReleaseDate.Value.Year <= request.ReleaseYearTo);
             }
 
             movies = movies.Skip((request.Page - 1) * request.PageSize)
@@ -409,24 +409,24 @@ namespace MovieRecommendationApi.Controllers
         [HttpGet("list-genre-by-id")]
         public async Task<IActionResult> GetGenres([FromQuery] List<int> genre_ids)
         {
-			if (genre_ids == null || !genre_ids.Any())
-			{
-				return BadRequest("No genre_ids provided.");
-			}
+            if (genre_ids == null || !genre_ids.Any())
+            {
+                return BadRequest("No genre_ids provided.");
+            }
 
             try
             {
-				var genres = await dbContext.Genres
-				.Where(g => genre_ids.Contains(g.Id))
-				.ToListAsync();
+                var genres = await dbContext.Genres
+                .Where(g => genre_ids.Contains(g.Id))
+                .ToListAsync();
 
-				return Ok(genres);
-			}
-            catch(Exception ex)
-            {
-                return BadRequest(ex.Message); 
+                return Ok(genres);
             }
-		}
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 
     public class AddFavoriteVM

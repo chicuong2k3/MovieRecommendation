@@ -10,21 +10,21 @@ namespace MovieRecommendationApi.Requests
             string? Query = null,
             List<int>? GenreIds = null,
             List<int>? Ratings = null,
-            DateTime? ReleaseDateFrom = null,
-            DateTime? RealeaseDateTo = null) : base(Page, PageSize)
+            int? ReleaseYearFrom = null,
+            int? ReleaseYearTo = null) : base(Page, PageSize)
         {
             this.Query = Query;
             this.GenreIds = GenreIds;
             this.Ratings = Ratings;
-            this.ReleaseDateFrom = ReleaseDateFrom;
-            this.RealeaseDateTo = RealeaseDateTo;
+            this.ReleaseYearFrom = ReleaseYearFrom;
+            this.ReleaseYearTo = ReleaseYearTo;
         }
 
         public string? Query { get; init; }
         public List<int>? GenreIds { get; init; }
         public List<int>? Ratings { get; init; }
 
-        public DateTime? ReleaseDateFrom { get; init; }
-        public DateTime? RealeaseDateTo { get; init; }
+        public int? ReleaseYearFrom { get; init; }
+        public int? ReleaseYearTo { get; init; }
     }
 }
