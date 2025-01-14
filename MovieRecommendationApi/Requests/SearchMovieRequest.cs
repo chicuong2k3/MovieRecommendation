@@ -8,7 +8,7 @@ namespace MovieRecommendationApi.Requests
             int Page,
             int PageSize = 10,
             string? Query = null,
-            List<int>? GenreIds = null,
+            List<string>? GenreIds = null,
             List<int>? Ratings = null,
             int? ReleaseYearFrom = null,
             int? ReleaseYearTo = null) : base(Page, PageSize)
@@ -21,7 +21,7 @@ namespace MovieRecommendationApi.Requests
         }
 
         public string? Query { get; init; }
-        public List<int>? GenreIds { get; init; }
+        public List<string>? GenreIds { get; init; }
         public List<int>? Ratings { get; init; }
 
         public int? ReleaseYearFrom { get; init; }

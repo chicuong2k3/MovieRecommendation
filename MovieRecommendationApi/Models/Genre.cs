@@ -8,11 +8,17 @@ namespace MovieRecommendationApi.Models
     public class Genre
     {
         [Key]
-        [JsonPropertyName("id")]
+        [JsonPropertyName("_id")]
+        [JsonConverter(typeof(ObjectIdConverter))]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        public int Id { get; set; }
+        public string Id { get; set; } = default!;
+
+        [JsonPropertyName("id")]
+        public int IdForCrawling { get; set; }
 
         [JsonPropertyName("name")]
         public string? Name { get; set; }
+        [JsonPropertyName("tmdb_id")]
+        public int TmdbId { get; set; }
     }
 }

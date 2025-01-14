@@ -20,5 +20,7 @@ namespace MovieRecommendationApi.Models
 
         [JsonPropertyName("origin_country")]
         public string? OriginCountry { get; set; }
+
+        public IList<Movie>? Movies { get; set; }
     }
 }

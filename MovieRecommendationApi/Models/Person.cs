@@ -1,13 +1,18 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using MovieRecommendationApi.Data;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace MovieRecommendationApi.Models
 {
     public class Person
     {
-        [JsonPropertyName("id")]
+        [JsonPropertyName("_id")]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        public int Id { get; set; }
+        [JsonConverter(typeof(ObjectIdConverter))]
+        public string Id { get; set; } = default!;
+
+        [JsonPropertyName("id")]
+        public int IdForCrawling { get; set; }
 
         [JsonPropertyName("adult")]
         public bool Adult { get; set; }
@@ -51,6 +56,5 @@ namespace MovieRecommendationApi.Models
 
         [JsonPropertyName("movie_credits")]
         public MovieCredit? MovieCredits { get; set; }
-        public IList<MovieCast>? MovieCasts { get; set; }
     }
 }

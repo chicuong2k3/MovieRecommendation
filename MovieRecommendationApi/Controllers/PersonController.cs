@@ -30,7 +30,7 @@ namespace MovieRecommendationApi.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(string id)
         {
             var person = await dbContext.People
                 .Where(x => x.Id == id)
@@ -49,7 +49,7 @@ namespace MovieRecommendationApi.Controllers
         }
 
         [HttpGet("{id}/movie_credits")]
-        public async Task<IActionResult> GetActingList(int id)
+        public async Task<IActionResult> GetActingList(string id)
         {
             var person = await dbContext.People
                 .Where(x => x.Id == id)
