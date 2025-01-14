@@ -7,7 +7,6 @@ namespace MovieRecommendationApi.Models
         [Key]
         public string Id { get; set; } = default!;
         public string? UserId { get; set; }
-        public User? User { get; set; }
         public string? MovieId { get; set; }
         public Movie? Movie { get; set; }
     }

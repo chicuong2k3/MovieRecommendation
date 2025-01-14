@@ -409,7 +409,7 @@ namespace MovieRecommendationApi.Data
                 var review = new Review
                 {
                     Id = reviewModel.Id,
-                    User = user,
+                    //User = user,
                     MovieId = movieId, // Assign the MovieId here
                     Content = reviewModel.Content,
                     CreatedAt = reviewModel.CreatedAt,

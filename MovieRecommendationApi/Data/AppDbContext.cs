@@ -14,9 +14,12 @@ namespace MovieRecommendationApi.Data
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-
-
+            //table reviews
             builder.Entity<Review>()
+                .HasKey(x => x.Id);
+
+
+			builder.Entity<Review>()
                .HasOne(x => x.Movie)
                .WithMany(x => x.Reviews)
                .HasForeignKey(x => x.MovieId)
@@ -39,6 +42,7 @@ namespace MovieRecommendationApi.Data
                 .WithMany(x => x.FavoriteMovies)
                 .HasForeignKey(x => x.MovieId)
                 .OnDelete(DeleteBehavior.NoAction);
+
 
 
 

@@ -10,7 +10,6 @@ namespace MovieRecommendationApi.Models
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public string Id { get; set; } = default!;
         public string? UserId { get; set; }
-        public User? User { set; get; }
         public string MovieId { get; set; } = default!;
         public Movie? Movie { set; get; }
         public string? Content { get; set; }
