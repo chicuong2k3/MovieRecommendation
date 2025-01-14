@@ -99,7 +99,9 @@ namespace MovieRecommendationApi.Models
         [JsonPropertyName("reviews")]
         [NotMapped]
         public IList<ReviewModel>? ReviewModels { get; set; }
-        public IList<Review>? Reviews { get; set; }
+
+		[JsonIgnore]
+		public IList<Review>? Reviews { get; set; }
 
         public IList<WatchMovie>? WatchMovies { get; set; }
         public IList<FavoriteMovie>? FavoriteMovies { get; set; }
