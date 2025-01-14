@@ -471,16 +471,18 @@ namespace MovieRecommendationApi.Controllers
             var userId = User.GetUserId();
 
 
-            var favoriteMovies = dbContext.FavoriteMovies.Where(f => f.UserId == userId);
+            var favoriteMovies = dbContext.FavoriteMovies
+                .Where(f => f.UserId == userId);
 
             if (!string.IsNullOrEmpty(Query))
             {
-                favoriteMovies = favoriteMovies.Where(f => f.Movie.Title.Contains(Query));
+                favoriteMovies = favoriteMovies.Where(f => f.Movie.Title.ToLower().Contains(Query.ToLower()));
             }
 
-            var total = await dbContext.FavoriteMovies.CountAsync();
+            var total = await favoriteMovies.CountAsync();
 
-            var res = favoriteMovies
+            var res = await favoriteMovies
+                   .Include(x => x.Movie)
                    .Skip((Page - 1) * PageSize)
                    .Take(PageSize)
                    .Select(x => x.Movie).ToListAsync();
