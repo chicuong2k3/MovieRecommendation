@@ -209,26 +209,26 @@ namespace MovieRecommendationApi.Controllers
         {
             try
             {
-				var today = new DateTime(2025, 1, 1);
-				if (type == "day")
+                var today = new DateTime(2025, 1, 1);
+                if (type == "day")
                 {
-					// Lấy ngày hiện tại
-					var todayMovies = await dbContext.Movies
-	                .Where(movie => movie.ReleaseDate == today)
-	                .OrderByDescending(movie => movie.ReleaseDate)
-	                .Take(20)
-	                .ToListAsync();
+                    // Lấy ngày hiện tại
+                    var todayMovies = await dbContext.Movies
+                    .Where(movie => movie.ReleaseDate == today)
+                    .OrderByDescending(movie => movie.ReleaseDate)
+                    .Take(20)
+                    .ToListAsync();
                     return Ok(todayMovies);
-				}
+                }
                 else
                 {
-					var sevenDaysAgo = today.AddDays(-7);
-					var trendingMovies = await dbContext.Movies
-	                    .Where(movie => movie.ReleaseDate >= sevenDaysAgo && movie.ReleaseDate <= today)
-	                    .OrderByDescending(movie => movie.ReleaseDate) // Sắp xếp theo ngày phát hành mới nhất
-	                    .Take(20) // Lấy tối đa 20 bộ phim
-	                    .ToListAsync();
-					return Ok(trendingMovies);
+                    var sevenDaysAgo = today.AddDays(-7);
+                    var trendingMovies = await dbContext.Movies
+                        .Where(movie => movie.ReleaseDate >= sevenDaysAgo && movie.ReleaseDate <= today)
+                        .OrderByDescending(movie => movie.ReleaseDate) // Sắp xếp theo ngày phát hành mới nhất
+                        .Take(20) // Lấy tối đa 20 bộ phim
+                        .ToListAsync();
+                    return Ok(trendingMovies);
                 }
             }
             catch (Exception ex)
@@ -249,13 +249,14 @@ namespace MovieRecommendationApi.Controllers
                     var total = await dbContext.WatchMovies
                     .Where(x => x.Id == userId).ToListAsync();
                     var res = total
-					.Skip((Page - 1) * PageSize)
+                    .Skip((Page - 1) * PageSize)
                     .Take(PageSize)
                     .Select(x => x.Movie);
-                    return Ok(new {
+                    return Ok(new
+                    {
                         data = res,
                         totalPages = (int)Math.Ceiling((double)total.Count / PageSize)
-					});
+                    });
                 }
                 var total1 = await dbContext.WatchMovies
                     .Where(x => x.Id == userId && x.Movie.Title.Contains(Query)).ToListAsync();
@@ -266,8 +267,8 @@ namespace MovieRecommendationApi.Controllers
                 return Ok(new
                 {
                     data = res1,
-					totalPages = (int)Math.Ceiling((double)total1.Count / PageSize)
-				});
+                    totalPages = (int)Math.Ceiling((double)total1.Count / PageSize)
+                });
             }
             catch (Exception ex)
             {
@@ -299,8 +300,8 @@ namespace MovieRecommendationApi.Controllers
                     return Ok(new
                     {
                         data = res,
-						totalPages = (int)Math.Ceiling((double)totalRes.Count / PageSize)
-					});
+                        totalPages = (int)Math.Ceiling((double)totalRes.Count / PageSize)
+                    });
 
                 }
                 var totalRes1 = await dbContext.Reviews
@@ -317,7 +318,7 @@ namespace MovieRecommendationApi.Controllers
                 {
                     data = res1,
                     totalPages = (int)Math.Ceiling((double)totalRes1.Count / PageSize)
-				});
+                });
             }
             catch (Exception ex)
             {
@@ -330,14 +331,14 @@ namespace MovieRecommendationApi.Controllers
         {
             try
             {
-				var temp = await dbContext.Movies
-	                .Where(x => x.Id == id)
-	                .SelectMany(x => x.Genres.Select(g => g.Id))
-	                .ToListAsync();
+                var temp = await dbContext.Movies
+                    .Where(x => x.Id == id)
+                    .SelectMany(x => x.Genres.Select(g => g.Id))
+                    .ToListAsync();
 
                 var res = await dbContext.Movies.Where(x => x.Id != id && x.Genres.Any(genre => temp.Contains(genre.Id))
                 ).ToListAsync();
-				return Ok(res);
+                return Ok(res);
             }
             catch (Exception ex)
             {
@@ -353,11 +354,10 @@ namespace MovieRecommendationApi.Controllers
             {
                 var totalRes = await dbContext.Reviews.Where(x => x.MovieId == id).ToListAsync();
 
-                var res = totalRes.
-                Skip(PageSize * (Page - 1)).Take(PageSize);
+                var res = totalRes.Skip(PageSize * (Page - 1)).Take(PageSize);
                 return Ok(new
                 {
-                    data = res,
+                    data = mapper.Map<IEnumerable<ReviewDto>>(res),
                     totalPages = (int)Math.Ceiling((double)totalRes.Count / PageSize)
                 });
             }
@@ -377,7 +377,7 @@ namespace MovieRecommendationApi.Controllers
                 var res = totalRes.Skip(PageSize * (Page - 1)).Take(PageSize);
                 return Ok(new
                 {
-                    data = res,
+                    data = mapper.Map<IEnumerable<VideoDto>>(res),
                     totalPages = (int)Math.Ceiling((double)totalRes.Count / PageSize)
                 });
             }
@@ -408,22 +408,22 @@ namespace MovieRecommendationApi.Controllers
                     {
                         data = res,
                         totalPages = (int)Math.Ceiling((double)total1.Count / PageSize)
-				    });
+                    });
                 }
 
-				var total = await dbContext.FavoriteMovies
-					   .Where(f => f.UserId == userId && f.Movie.Title.Contains(Query)).ToListAsync();
+                var total = await dbContext.FavoriteMovies
+                       .Where(f => f.UserId == userId && f.Movie.Title.Contains(Query)).ToListAsync();
 
                 var res1 = total
                        .Skip((Page - 1) * PageSize)
                        .Take(PageSize)
                        .Select(x => x.Movie);
                 return Ok(new
-				{
-					data = res1,
-					totalPages = (int)Math.Ceiling((double)total.Count / PageSize)
-				});
-			}
+                {
+                    data = res1,
+                    totalPages = (int)Math.Ceiling((double)total.Count / PageSize)
+                });
+            }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
@@ -479,47 +479,47 @@ namespace MovieRecommendationApi.Controllers
             }
         }
 
-		[HttpGet("list-movie-by-id")]
-		public async Task<IActionResult> GetMovies([FromQuery] List<string> movie_ids)
-		{
-			if (movie_ids == null || !movie_ids.Any())
-			{
-				return BadRequest("No genre_ids provided.");
-			}
+        [HttpGet("list-movie-by-id")]
+        public async Task<IActionResult> GetMovies([FromQuery] List<string> movie_ids)
+        {
+            if (movie_ids == null || !movie_ids.Any())
+            {
+                return BadRequest("No genre_ids provided.");
+            }
 
-			try
-			{
-				var genres = await dbContext.Movies
-				.Where(g => movie_ids.Contains(g.Id))
-				.ToListAsync();
+            try
+            {
+                var genres = await dbContext.Movies
+                .Where(g => movie_ids.Contains(g.Id))
+                .ToListAsync();
 
-				return Ok(genres);
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(ex.Message);
-			}
-		}
+                return Ok(genres);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
-		[HttpGet("list-cast-by-id-movie")]
-		public async Task<IActionResult> GetCastMovies([FromQuery] string id)
-		{
-			try
-			{
-				var movie = await dbContext.Movies
-				.Where(g => g.Id == id)
+        [HttpGet("list-cast-by-id-movie")]
+        public async Task<IActionResult> GetCastMovies([FromQuery] string id)
+        {
+            try
+            {
+                var movie = await dbContext.Movies
+                .Where(g => g.Id == id)
                 .Include(g => g.Credits)
                 .ThenInclude(c => c.Cast)
-				.FirstOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
-				return Ok(movie);
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(ex.Message);
-			}
-		}
-	}
+                return Ok(movie);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+    }
 
     public class AddFavoriteVM
     {

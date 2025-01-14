@@ -5,7 +5,7 @@ namespace MovieRecommendationApi.Requests
     public record SearchMovieRequest : PaginationRequest
     {
         public SearchMovieRequest(
-            int Page,
+            int Page = 1,
             int PageSize = 10,
             string? Query = null,
             List<string>? GenreIds = null,
