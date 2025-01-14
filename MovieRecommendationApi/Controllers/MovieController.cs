@@ -8,6 +8,7 @@ using MovieRecommendationApi.Dtos;
 using MovieRecommendationApi.Models;
 using MovieRecommendationApi.Requests;
 using System.Net;
+using System.Reflection.Metadata;
 using System.Text.Json;
 
 namespace MovieRecommendationApi.Controllers
@@ -404,6 +405,28 @@ namespace MovieRecommendationApi.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("list-genre-by-id")]
+        public async Task<IActionResult> GetGenres([FromQuery] List<int> genre_ids)
+        {
+			if (genre_ids == null || !genre_ids.Any())
+			{
+				return BadRequest("No genre_ids provided.");
+			}
+
+            try
+            {
+				var genres = await dbContext.Genres
+				.Where(g => genre_ids.Contains(g.Id))
+				.ToListAsync();
+
+				return Ok(genres);
+			}
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message); 
+            }
+		}
     }
 
     public class AddFavoriteVM
