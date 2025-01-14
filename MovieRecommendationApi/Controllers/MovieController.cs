@@ -8,7 +8,6 @@ using MovieRecommendationApi.Dtos;
 using MovieRecommendationApi.Models;
 using MovieRecommendationApi.Requests;
 using System.Net;
-using System.Reflection.Metadata;
 using System.Text.Json;
 
 namespace MovieRecommendationApi.Controllers
@@ -293,16 +292,15 @@ namespace MovieRecommendationApi.Controllers
 
         [HttpGet("recommentdation-movie")]
         [FirebaseAuthenticationAttribute]
-        public async Task<IActionResult> GetRecommendationMovie([FromQuery] int? id)
+        public async Task<IActionResult> GetRecommendationMovie([FromQuery] string? id)
         {
             try
             {
                 var userId = User.GetUserId();
                 var res = await dbContext.Movies.Where(x => x.Id == id)
                     .Include(x => x.Genres)
-                    .
                     .ToListAsync();
-				return Ok(res);
+                return Ok(res);
             }
             catch (Exception ex)
             {
@@ -318,12 +316,13 @@ namespace MovieRecommendationApi.Controllers
             {
                 var totalRes = await dbContext.Reviews.Where(x => x.MovieId == id).ToListAsync();
 
-				var res = totalRes.
-				Skip(PageSize * (Page - 1)).Take(PageSize);
-                return Ok(new {
+                var res = totalRes.
+                Skip(PageSize * (Page - 1)).Take(PageSize);
+                return Ok(new
+                {
                     data = res,
-					totalPages = (int)Math.Ceiling((double)totalRes.Count / PageSize)
-				});
+                    totalPages = (int)Math.Ceiling((double)totalRes.Count / PageSize)
+                });
             }
             catch (Exception ex)
             {
@@ -338,11 +337,11 @@ namespace MovieRecommendationApi.Controllers
             {
                 var totalRes = await dbContext.Videos.Where(x => x.MovieId == id).ToListAsync();
 
-				var res = totalRes.Skip(PageSize * (Page - 1)).Take(PageSize);
+                var res = totalRes.Skip(PageSize * (Page - 1)).Take(PageSize);
                 return Ok(new
                 {
                     data = res,
-					totalPages = (int)Math.Ceiling((double)totalRes.Count/PageSize)
+                    totalPages = (int)Math.Ceiling((double)totalRes.Count / PageSize)
                 });
             }
             catch (Exception ex)
@@ -365,7 +364,7 @@ namespace MovieRecommendationApi.Controllers
                         .Where(f => f.UserId == userId).ToListAsync()).Count;
 
                     var res = await dbContext.FavoriteMovies
-						.Where(f => f.UserId == userId)
+                        .Where(f => f.UserId == userId)
                         .Skip((Page - 1) * PageSize)
                         .Take(PageSize)
                         .Select(x => x.Movie)
@@ -374,24 +373,24 @@ namespace MovieRecommendationApi.Controllers
                     {
                         data = res,
                         totalPages = (int)Math.Ceiling((double)total1 / PageSize)
-				    });
+                    });
                 }
 
-				var total = (await dbContext.FavoriteMovies
-					   .Where(f => f.UserId == userId && f.Movie.Title.Contains(Query)).ToListAsync()).Count;
+                var total = (await dbContext.FavoriteMovies
+                       .Where(f => f.UserId == userId && f.Movie.Title.Contains(Query)).ToListAsync()).Count;
 
-				var res1 = await dbContext.FavoriteMovies
+                var res1 = await dbContext.FavoriteMovies
                        .Where(f => f.UserId == userId && f.Movie.Title.Contains(Query))
                        .Skip((Page - 1) * PageSize)
                        .Take(PageSize)
                        .Select(x => x.Movie)
                        .ToListAsync();
                 return Ok(new
-				{
-					data = res1,
-					totalPages = (int)Math.Ceiling((double)total / PageSize)
-				});
-			}
+                {
+                    data = res1,
+                    totalPages = (int)Math.Ceiling((double)total / PageSize)
+                });
+            }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
