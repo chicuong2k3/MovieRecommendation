@@ -293,22 +293,16 @@ namespace MovieRecommendationApi.Controllers
 
         [HttpGet("recommentdation-movie")]
         [FirebaseAuthenticationAttribute]
-        public async Task<IActionResult> GetRecommendationMovie([FromQuery] string? genre)
+        public async Task<IActionResult> GetRecommendationMovie([FromQuery] int? id)
         {
             try
             {
                 var userId = User.GetUserId();
-                if (string.IsNullOrWhiteSpace(genre))
-                {
-                    var res = await dbContext.Movies
-                        .ToListAsync();
-                    return Ok(res);
-                }
-                var res1 = await dbContext.Movies
-                         .Include(x => x.Genres)
-                         .Where(x => x.Genres.Any(g => g.Name.Contains(genre)))
-                         .ToListAsync();
-                return Ok(res1);
+                var res = await dbContext.Movies.Where(x => x.Id == id)
+                    .Include(x => x.Genres)
+                    .
+                    .ToListAsync();
+				return Ok(res);
             }
             catch (Exception ex)
             {
@@ -322,9 +316,14 @@ namespace MovieRecommendationApi.Controllers
         {
             try
             {
-                var res = await dbContext.Reviews.Where(x => x.MovieId == id).
-                Skip(PageSize * (Page - 1)).Take(PageSize).ToListAsync();
-                return Ok(res);
+                var totalRes = await dbContext.Reviews.Where(x => x.MovieId == id).ToListAsync();
+
+				var res = totalRes.
+				Skip(PageSize * (Page - 1)).Take(PageSize);
+                return Ok(new {
+                    data = res,
+					totalPages = (int)Math.Ceiling((double)totalRes.Count / PageSize)
+				});
             }
             catch (Exception ex)
             {
@@ -337,9 +336,14 @@ namespace MovieRecommendationApi.Controllers
         {
             try
             {
-                var res = await dbContext.Videos.Where(x => x.MovieId == id).
-                Skip(PageSize * (Page - 1)).Take(PageSize).ToListAsync();
-                return Ok(res);
+                var totalRes = await dbContext.Videos.Where(x => x.MovieId == id).ToListAsync();
+
+				var res = totalRes.Skip(PageSize * (Page - 1)).Take(PageSize);
+                return Ok(new
+                {
+                    data = res,
+					totalPages = (int)Math.Ceiling((double)totalRes.Count/PageSize)
+                });
             }
             catch (Exception ex)
             {
@@ -357,22 +361,37 @@ namespace MovieRecommendationApi.Controllers
                 var userId = User.GetUserId();
                 if (string.IsNullOrWhiteSpace(Query))
                 {
+                    var total1 = (await dbContext.FavoriteMovies
+                        .Where(f => f.UserId == userId).ToListAsync()).Count;
+
                     var res = await dbContext.FavoriteMovies
-                        .Where(f => f.UserId == userId)
+						.Where(f => f.UserId == userId)
                         .Skip((Page - 1) * PageSize)
                         .Take(PageSize)
                         .Select(x => x.Movie)
                         .ToListAsync();
-                    return Ok(res);
+                    return Ok(new
+                    {
+                        data = res,
+                        totalPages = (int)Math.Ceiling((double)total1 / PageSize)
+				    });
                 }
-                var res1 = await dbContext.FavoriteMovies
+
+				var total = (await dbContext.FavoriteMovies
+					   .Where(f => f.UserId == userId && f.Movie.Title.Contains(Query)).ToListAsync()).Count;
+
+				var res1 = await dbContext.FavoriteMovies
                        .Where(f => f.UserId == userId && f.Movie.Title.Contains(Query))
                        .Skip((Page - 1) * PageSize)
                        .Take(PageSize)
                        .Select(x => x.Movie)
                        .ToListAsync();
-                return Ok(res1);
-            }
+                return Ok(new
+				{
+					data = res1,
+					totalPages = (int)Math.Ceiling((double)total / PageSize)
+				});
+			}
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
