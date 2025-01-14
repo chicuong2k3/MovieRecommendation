@@ -15,10 +15,10 @@ namespace MovieRecommendationApi.Data
             //context.Database.EnsureDeleted();
             //context.Database.EnsureCreated();
 
-            var jsonData = File.ReadAllText("tmdb_db.movies.json");
-            var movies = JsonSerializer.Deserialize<List<Movie>>(jsonData);
+            //var jsonData = File.ReadAllText("tmdb_db.movies.json");
+            //var movies = JsonSerializer.Deserialize<List<Movie>>(jsonData);
 
-            if (movies == null || !movies.Any()) return;
+            //if (movies == null || !movies.Any()) return;
 
             //SeedGenres(context);
 
@@ -299,37 +299,70 @@ namespace MovieRecommendationApi.Data
 
             if (people == null || !people.Any()) return;
 
+            var selectedPeople = people.Take(100);
 
-            // Extract unique credits from the movies list
-            var movieCredits = people
-                .Select(m => m.MovieCredit)
-                .Where(c => c != null)
-                .Take(500)
-                .ToList();
+            // Step 1: Preload all MovieCredits
+            var movieCredits = selectedPeople
+                .Where(p => p.MovieCredit != null)
+                .Select(p => p.MovieCredit)
+                .DistinctBy(x => x.Id).ToList();
 
-            var existingMovie = context.Movies;
+            var movieCreditDictionary = movieCredits.ToDictionary(mc => mc.Id);
 
             foreach (var movieCredit in movieCredits)
             {
-                // Check if the credit already exists
-                if (!context.MovieCredits.Any(c => c.Id == movieCredit.Id))
+
+                if (movieCredit.Cast != null)
                 {
-                    if (movieCredit.Cast != null)
+                    var movieTitles = movieCredit.Cast.Select(c => c.Title.ToLower()).ToList();
+                    var existingMovies = context.Movies
+                        .Where(m => movieTitles.Contains(m.Title.ToLower()))
+                        .ToList();
+
+                    movieCredit.Cast = existingMovies;
+
+
+                }
+            }
+
+            context.MovieCredits.AddRange(movieCredits.Where(mc => !context.MovieCredits.Any(existing => existing.Id == mc.Id)));
+
+            context.SaveChanges();
+
+            foreach (var person in selectedPeople)
+            {
+                // Ensure the MovieCreditId is correctly set
+                if (person.MovieCredit != null)
+                {
+                    // Assign the corresponding MovieCreditId from the MovieCredit dictionary
+                    var movieCredit = movieCreditDictionary.GetValueOrDefault(person.MovieCredit.Id);
+                    if (movieCredit != null)
                     {
-                        var castTitles = movieCredit.Cast.Select(c => c.Title.ToLower());
-                        movieCredit.Cast = existingMovie.Where(x => castTitles.Contains(x.Title.ToLower())).ToList();
+                        person.MovieCreditId = movieCredit.Id;
                     }
+                }
 
-                    // Add the credit
-                    context.MovieCredits.Add(movieCredit);
+                // Check if the person already exists in the database by their IdForCrawling
+                var existingPerson = context.People
+                    .FirstOrDefault(p => p.IdForCrawling == person.IdForCrawling);
 
-
-                    context.SaveChanges();
+                if (existingPerson != null)
+                {
+                    // If the person exists, update their MovieCreditId
+                    existingPerson.MovieCreditId = person.MovieCreditId;
+                }
+                else
+                {
+                    // If the person doesn't exist, add them to the context
+                    context.People.Add(person);
                 }
             }
 
 
+            context.SaveChanges();
         }
+
+
 
 
         private static void SeedSimilarMovies(AppDbContext context)
