@@ -15,10 +15,10 @@ namespace MovieRecommendationApi.Data
             //context.Database.EnsureDeleted();
             //context.Database.EnsureCreated();
 
-            //var jsonData = File.ReadAllText("tmdb_db.movies.json");
-            //var movies = JsonSerializer.Deserialize<List<Movie>>(jsonData);
+            var jsonData = File.ReadAllText("tmdb_db.movies.json");
+            var movies = JsonSerializer.Deserialize<List<Movie>>(jsonData);
 
-            //if (movies == null || !movies.Any()) return;
+            if (movies == null || !movies.Any()) return;
 
             //SeedGenres(context);
 
@@ -31,7 +31,7 @@ namespace MovieRecommendationApi.Data
 
             //SeedPeople(context);
 
-            // SeedCredits(context, movies);
+            SeedCredits(context, movies);
             //SeedMovies(context, movies);
 
             //SeedMovieCredits(context);
@@ -136,38 +136,66 @@ namespace MovieRecommendationApi.Data
         }
         private static void SeedCredits(AppDbContext context, List<Movie> movies)
         {
-            // Extract unique credits from the movies list
+            // Step 1: Extract unique credits from the movies list
             var credits = movies
-                .Select(m => m.Credits)
+                .Select(m => m.Credit)
                 .Where(c => c != null)
                 .DistinctBy(c => c.Id)
-                .Take(200)
+                .Take(100)  // Limit to the first 100 credits
                 .ToList();
 
-            // Fetch all existing People IDs into a HashSet for fast lookups
-            var existingPeople = context.People;
+            // Step 2: Preload all People into a Dictionary for fast lookup by IdForCrawling
+            var existingPeople = context.People
+                .ToDictionary(p => p.IdForCrawling, p => p);  // Index People by IdForCrawling for fast lookup
 
+            // Step 3: Preload all Movies by their TmdbId for quick reference
+            var existingMovies = context.Movies
+                .ToDictionary(m => m.TmdbId, m => m);  // Index Movies by TmdbId for fast lookup
+
+            // Step 4: Track changes to Credits and Movies
             foreach (var credit in credits)
             {
-                // Check if the credit already exists
+                // Ensure the credit is properly linked with cast members from existing people
+                if (credit.Cast != null)
+                {
+                    var castIds = credit.Cast.Select(c => c.IdForCrawling).ToList();
+                    var cast = existingPeople
+                        .Where(x => castIds.Contains(x.Key))
+                        .Select(x => x.Value)
+                        .ToList();
+
+                    // Set the Cast list for the Credit
+                    credit.Cast = cast;
+                }
+
+                // Check if the credit already exists in the database
                 if (!context.Credits.Any(c => c.Id == credit.Id))
                 {
-                    if (credit.Cast != null)
-                    {
-                        var castIds = credit.Cast.Select(c => c.IdForCrawling);
-                        credit.Cast = existingPeople.Where(x => castIds.Contains(x.IdForCrawling)).ToList();
-                    }
-
-                    // Add the credit
+                    // Add the credit to the context
                     context.Credits.Add(credit);
+                }
 
+                // Now, find the corresponding movie and set the CreditId
+                var movie = existingMovies.Values.FirstOrDefault(m => m.Credit?.Id == credit.Id);
+                if (movie != null)
+                {
+                    // Set the CreditId in the Movie (ensure the Movie is tracked)
+                    movie.CreditId = credit.Id;  // Link the Movie to the Credit
 
-                    context.SaveChanges();
+                    // If the movie is not being tracked, attach it to the context
+                    if (context.Entry(movie).State == EntityState.Detached)
+                    {
+                        context.Movies.Attach(movie);  // Attach movie to context if not tracked
+                    }
+                    context.Movies.Update(movie);  // Update the movie entity
                 }
             }
 
-
+            // Step 5: Save all changes at once to improve performance
+            context.SaveChanges();
         }
+
+
 
 
 
@@ -216,7 +244,7 @@ namespace MovieRecommendationApi.Data
                     var countryIds = movie.ProductionCountries?.Select(x => x.Id).ToList();
                     var companiesIds = movie.ProductionCompanies?.Select(x => x.Id).ToList();
                     var languageIds = movie.SpokenLanguages?.Select(x => x.Id).ToList();
-                    var creditId = movie.Credits?.Id;
+                    var creditId = movie.Credit?.Id;
                     var trailerIds = movie.Videos?.Select(x => x.Id).ToList();
 
                     movie.Genres = genres.Where(x => genreIds.Contains(x.IdForCrawling)).ToList();
@@ -224,7 +252,7 @@ namespace MovieRecommendationApi.Data
                     movie.ProductionCompanies = productCompanies.Where(x => companiesIds != null && companiesIds.Contains(x.Id)).ToList();
                     movie.ProductionCountries = productCountries.Where(x => countryIds != null && countryIds.Contains(x.Id)).ToList();
                     movie.SpokenLanguages = spokenLanguages.Where(x => languageIds != null && languageIds.Contains(x.Id)).ToList();
-                    movie.Credits = credits.Where(x => creditId == x.Id).FirstOrDefault();
+                    movie.Credit = credits.Where(x => creditId == x.Id).FirstOrDefault();
                     movie.Videos = trailers.Where(x => trailerIds != null && trailerIds.Contains(x.Id)).ToList();
 
                     // Add the movie and related entities

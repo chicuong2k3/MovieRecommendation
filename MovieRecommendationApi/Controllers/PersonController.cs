@@ -63,6 +63,7 @@ namespace MovieRecommendationApi.Controllers
             var person = await dbContext.People
                 .Where(x => x.Id == id)
                 .Include(x => x.MovieCredit)
+                .ThenInclude(x => x.Cast)
                 .FirstOrDefaultAsync();
 
             if (person == null)
@@ -79,7 +80,7 @@ namespace MovieRecommendationApi.Controllers
                 return error.MapErrorResponse();
             }
 
-            var movieCreditsDto = mapper.Map<MovieCredit>(movieCredits);
+            var movieCreditsDto = mapper.Map<MovieCreditDto>(movieCredits);
 
 
             return Ok(movieCreditsDto);

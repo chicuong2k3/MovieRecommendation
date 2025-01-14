@@ -94,7 +94,8 @@ namespace MovieRecommendationApi.Models
         public int VoteCount { get; set; }
 
         [JsonPropertyName("credits")]
-        public Credit? Credits { get; set; }
+        public Credit? Credit { get; set; }
+        public int? CreditId { get; set; }
 
         [JsonPropertyName("reviews")]
         [NotMapped]
