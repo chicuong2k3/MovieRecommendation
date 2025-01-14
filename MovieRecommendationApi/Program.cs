@@ -83,15 +83,10 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policyBuilder =>
     {
-        var origins = new List<string>();
-        builder.Configuration.Bind("Cors:Origins", origins);
-        if (origins.Any())
-        {
-            policyBuilder
-                .WithOrigins(origins.ToArray())
+        policyBuilder
+                .AllowAnyOrigin()
                 .AllowAnyMethod()
                 .AllowAnyHeader();
-        }
     });
 });
 
@@ -100,10 +95,7 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 
-app.UseCors(builder =>
-      builder.AllowAnyOrigin()
-             .AllowAnyHeader()
-             .AllowAnyMethod());
+app.UseCors();
 
 app.UseSwagger();
 app.UseSwaggerUI();
