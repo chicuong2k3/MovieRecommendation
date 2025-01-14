@@ -5,6 +5,7 @@
         public int Page { get; set; }
         public int TotalPages { get; set; }
         public int TotalResults { get; set; }
-        public List<T> Results { get; set; } = new();
+        public int PageSize { get; set; }
+        public List<T> Data { get; set; } = new();
     }
 }

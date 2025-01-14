@@ -29,6 +29,15 @@ namespace MovieRecommendationApi.Controllers
             this.mapper = mapper;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var people = await dbContext.People.ToListAsync();
+
+
+            return Ok(mapper.Map<List<PersonDto>>(people));
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id)
         {
