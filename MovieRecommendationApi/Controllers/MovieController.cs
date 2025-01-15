@@ -210,6 +210,9 @@ namespace MovieRecommendationApi.Controllers
                     Name = request.Username,
                     AvatarPath = request.AvatarPath
                 };
+
+                dbContext.Users.Add(user);
+                await dbContext.SaveChangesAsync();
             }
 
             var review = new Review
@@ -369,6 +372,7 @@ namespace MovieRecommendationApi.Controllers
                 {
                     Rating = rl.Rating,
                     Movie = mapper.Map<MovieDto>(rl.Movie!),
+                    CreatedAt = rl.CreatedAt
                 }).ToListAsync();
 
             return Ok(new PaginatedResponse<RatingDto>

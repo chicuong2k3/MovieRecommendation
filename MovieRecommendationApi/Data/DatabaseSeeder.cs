@@ -20,25 +20,25 @@ namespace MovieRecommendationApi.Data
 
             if (movies == null || !movies.Any()) return;
 
-            //SeedGenres(context);
+            SeedGenres(context);
 
-            //SeedBelongsToCollections(context, movies);
-            //SeedProductionCompanies(context, movies);
-            //SeedProductionCountries(context, movies);
-            //SeedSpokenLanguages(context, movies);
+            SeedBelongsToCollections(context, movies);
+            SeedProductionCompanies(context, movies);
+            SeedProductionCountries(context, movies);
+            SeedSpokenLanguages(context, movies);
 
-            //SeedVideos(context, movies);
+            SeedVideos(context, movies);
 
-            //SeedPeople(context);
+            SeedPeople(context);
 
             SeedCredits(context, movies);
-            //SeedMovies(context, movies);
+            SeedMovies(context, movies);
 
-            //SeedMovieCredits(context);
+            SeedMovieCredits(context);
 
-            //SeedSimilarMovies(context);
+            SeedSimilarMovies(context);
 
-            //SeedReviews(context, movies);
+            SeedReviews(context, movies);
 
             Console.WriteLine("Database seeding complete.");
         }
