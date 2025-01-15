@@ -5,6 +5,6 @@
         public string Id { get; set; } = default!;
         public string? Name { get; set; }
         public string? Username { get; set; }
-        public string? AvatarPath { get; set; }
+        public string AvatarPath { get; set; } = string.Empty;
     }
 }

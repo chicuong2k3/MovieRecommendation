@@ -137,26 +137,22 @@ namespace MovieRecommendationApi.Data
         private static void SeedCredits(AppDbContext context, List<Movie> movies)
         {
             // Step 1: Extract unique credits from the movies list
-            var credits = movies
-                .Select(m => m.Credit)
+            var creditsDict = movies
                 .Where(c => c != null)
                 .DistinctBy(c => c.Id)
-                .Take(100)  // Limit to the first 100 credits
-                .ToList();
+                .Take(100)
+                .ToDictionary(x => x.Id, x => x.Credit);
 
-            // Step 2: Preload all People into a Dictionary for fast lookup by IdForCrawling
             var existingPeople = context.People
-                .ToDictionary(p => p.IdForCrawling, p => p);  // Index People by IdForCrawling for fast lookup
+                .ToDictionary(p => p.IdForCrawling, p => p);
 
-            // Step 3: Preload all Movies by their TmdbId for quick reference
-            var existingMovies = context.Movies
-                .ToDictionary(m => m.TmdbId, m => m);  // Index Movies by TmdbId for fast lookup
 
-            // Step 4: Track changes to Credits and Movies
-            foreach (var credit in credits)
+
+            foreach (var key in creditsDict.Keys)
             {
-                // Ensure the credit is properly linked with cast members from existing people
-                if (credit.Cast != null)
+                var credit = creditsDict[key];
+
+                if (credit != null && credit.Cast != null)
                 {
                     var castIds = credit.Cast.Select(c => c.IdForCrawling).ToList();
                     var cast = existingPeople
@@ -176,10 +172,9 @@ namespace MovieRecommendationApi.Data
                 }
 
                 // Now, find the corresponding movie and set the CreditId
-                var movie = existingMovies.Values.FirstOrDefault(m => m.Credit?.Id == credit.Id);
+                var movie = context.Movies.FirstOrDefault(m => m.Id == key);
                 if (movie != null)
                 {
-                    // Set the CreditId in the Movie (ensure the Movie is tracked)
                     movie.CreditId = credit.Id;  // Link the Movie to the Credit
 
                     // If the movie is not being tracked, attach it to the context
@@ -191,13 +186,8 @@ namespace MovieRecommendationApi.Data
                 }
             }
 
-            // Step 5: Save all changes at once to improve performance
             context.SaveChanges();
         }
-
-
-
-
 
 
         private static void SeedVideos(AppDbContext context, List<Movie> movies)

@@ -196,21 +196,21 @@ namespace MovieRecommendationApi.Controllers
                 return error.MapErrorResponse();
             }
 
-            //var user = await dbContext.Users
-            //    .Where(x => x.Id == userId)
-            //    .FirstOrDefaultAsync();
+            var user = await dbContext.Users
+                .Where(x => x.Id == userId)
+                .FirstOrDefaultAsync();
 
 
-            //if (user == null)
-            //{
-            //    user = new User()
-            //    {
-            //        Id = userId,
-            //        Email = request.Username,
-            //        Name = request.Username,
-            //        AvatarPath = request.AvatarPath
-            //    };
-            //}
+            if (user == null)
+            {
+                user = new User()
+                {
+                    Id = userId,
+                    Email = request.Username,
+                    Name = request.Username,
+                    AvatarPath = request.AvatarPath
+                };
+            }
 
             var review = new Review
             {
@@ -218,14 +218,20 @@ namespace MovieRecommendationApi.Controllers
                 MovieId = id,
                 UserId = userId,
                 Rating = request.Rating,
-                Content = request.Content
+                Content = request.Content,
+                CreatedAt = DateTime.UtcNow
             };
 
             dbContext.Reviews.Add(review);
 
+
             await dbContext.SaveChangesAsync();
 
-            return Ok(mapper.Map<ReviewDto>(review));
+            var dto = mapper.Map<ReviewDto>(review);
+
+            dto.AuthorDetails = mapper.Map<UserDto>(user);
+
+            return Ok(dto);
         }
 
 
@@ -245,6 +251,16 @@ namespace MovieRecommendationApi.Controllers
                 return error.MapErrorResponse();
             }
 
+            var existinngWatchMovie = await dbContext.WatchMovies
+                .Where(x => x.MovieId == request.MovieId && x.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            if (existinngWatchMovie != null)
+            {
+                var error = ErrorResponse.Create("Movie already in watch list", "movie_already_in_watch_list", HttpStatusCode.BadRequest);
+                return error.MapErrorResponse();
+            }
+
             var watchMovie = new WatchMovie
             {
                 MovieId = request.MovieId,
@@ -254,7 +270,9 @@ namespace MovieRecommendationApi.Controllers
             dbContext.WatchMovies.Add(watchMovie);
             await dbContext.SaveChangesAsync();
 
-            return Ok();
+
+
+            return Ok(mapper.Map<WatchMovieDto>(watchMovie));
         }
 
         [HttpGet("top-trending-movies")]
@@ -295,43 +313,33 @@ namespace MovieRecommendationApi.Controllers
         public async Task<IActionResult> GetWatchList([FromQuery] int Page = 1, [FromQuery] int PageSize = 20, [FromQuery] string? Query = null)
         {
             var userId = User.GetUserId();
-            if (string.IsNullOrWhiteSpace(Query))
+
+            var watchMovies = dbContext.WatchMovies.Include(x => x.Movie)
+                .Where(w => w.UserId == userId && w.Movie != null);
+
+            if (!string.IsNullOrWhiteSpace(Query))
             {
-                var total = await dbContext.WatchMovies
-                    .Where(x => x.Id == userId).ToListAsync();
-                var res = total
-                    .Skip((Page - 1) * PageSize)
-                    .Take(PageSize)
-                    .Select(x => x.Movie);
+                watchMovies = watchMovies.Where(x => x.Movie.Title != null &&
+                    x.Movie.Title.ToLower().Contains(Query.ToLower()));
 
-                var response = new PaginatedResponse<MovieDto>
-                {
-                    Page = Page,
-                    PageSize = PageSize,
-                    TotalPages = (int)Math.Ceiling((double)total.Count / PageSize),
-                    TotalResults = total.Count,
-                    Data = mapper.Map<List<MovieDto>>(res)
-                };
-
-                return Ok(response);
             }
-            var total1 = await dbContext.WatchMovies
-                .Where(x => x.Id == userId && x.Movie.Title != null && x.Movie.Title.Contains(Query)).ToListAsync();
-            var res1 = total1
+            var total = await watchMovies.CountAsync();
+
+            var res = watchMovies
                 .Skip((Page - 1) * PageSize)
                 .Take(PageSize)
                 .Select(x => x.Movie);
 
-            var response1 = new PaginatedResponse<MovieDto>
+            var response = new PaginatedResponse<MovieDto>
             {
                 Page = Page,
                 PageSize = PageSize,
-                TotalPages = (int)Math.Ceiling((double)total1.Count / PageSize),
-                TotalResults = total1.Count,
-                Data = mapper.Map<List<MovieDto>>(res1)
+                TotalPages = (int)Math.Ceiling((double)total / PageSize),
+                TotalResults = total,
+                Data = mapper.Map<List<MovieDto>>(res)
             };
 
-            return Ok(response1);
+            return Ok(response);
         }
 
 
@@ -340,41 +348,36 @@ namespace MovieRecommendationApi.Controllers
         public async Task<IActionResult> GetRatingList([FromQuery] int Page = 1, [FromQuery] int PageSize = 20, [FromQuery] string? Query = null)
         {
             var userId = User.GetUserId();
-            if (string.IsNullOrWhiteSpace(Query))
+
+            var reviews = dbContext.Reviews.Include(x => x.Movie)
+                .Where(x => x.UserId == userId && x.Movie != null);
+
+
+            if (!string.IsNullOrWhiteSpace(Query))
             {
-                var totalRes = await dbContext.Reviews
-                .Where(x => x.UserId == userId).ToListAsync();
 
-                var res = totalRes
-                .Skip((Page - 1) * PageSize)
-                .Take(PageSize)
-                .Select(rl => new
-                {
-                    rating = rl.Rating,
-                    movie = rl.Movie,
-                });
-                return Ok(new
-                {
-                    data = res,
-                    totalPages = (int)Math.Ceiling((double)totalRes.Count / PageSize)
-                });
-
+                reviews = reviews.Where(x => x.Movie!.Title != null
+                    && x.Movie.Title.ToLower().Contains(Query.ToLower()));
             }
-            var totalRes1 = await dbContext.Reviews
-                .Where(x => x.UserId == userId && x.Movie.Title.Contains(Query)).ToListAsync();
-            var res1 = totalRes1
+
+            var total = await reviews.CountAsync();
+
+            var res = await reviews
                 .Skip((Page - 1) * PageSize)
                 .Take(PageSize)
-                .Select(rl => new
+                .Select(rl => new RatingDto
                 {
-                    rating = rl.Rating,
-                    movie = rl.Movie,
-                });
+                    Rating = rl.Rating,
+                    Movie = mapper.Map<MovieDto>(rl.Movie!),
+                }).ToListAsync();
 
-            return Ok(new
+            return Ok(new PaginatedResponse<RatingDto>
             {
-                data = res1,
-                totalPages = (int)Math.Ceiling((double)totalRes1.Count / PageSize)
+                Page = Page,
+                PageSize = PageSize,
+                TotalPages = (int)Math.Ceiling((double)total / PageSize),
+                TotalResults = total,
+                Data = res
             });
         }
 
@@ -422,13 +425,27 @@ namespace MovieRecommendationApi.Controllers
 
             var res = totalRes.Skip(PageSize * (Page - 1)).Take(PageSize);
 
+            var reviewDtos = mapper.Map<List<ReviewDto>>(res);
+
+            foreach (var reviewDto in reviewDtos)
+            {
+                var user = await dbContext.Users
+                    .Where(x => x.Id == reviewDto.UserId)
+                    .FirstOrDefaultAsync();
+
+                if (user != null)
+                {
+                    reviewDto.AuthorDetails = mapper.Map<UserDto>(user);
+                }
+            }
+
             var response = new PaginatedResponse<ReviewDto>
             {
                 Page = Page,
                 PageSize = PageSize,
                 TotalPages = (int)Math.Ceiling((double)totalRes.Count / PageSize),
                 TotalResults = totalRes.Count,
-                Data = mapper.Map<List<ReviewDto>>(res)
+                Data = reviewDtos
             };
 
             return Ok(response);
@@ -472,17 +489,17 @@ namespace MovieRecommendationApi.Controllers
 
 
             var favoriteMovies = dbContext.FavoriteMovies
-                .Where(f => f.UserId == userId);
+                   .Include(x => x.Movie)
+                .Where(f => f.UserId == userId && f.Movie != null);
 
             if (!string.IsNullOrEmpty(Query))
             {
-                favoriteMovies = favoriteMovies.Where(f => f.Movie.Title.ToLower().Contains(Query.ToLower()));
+                favoriteMovies = favoriteMovies.Where(f => f.Movie!.Title != null && f.Movie.Title.ToLower().Contains(Query.ToLower()));
             }
 
             var total = await favoriteMovies.CountAsync();
 
             var res = await favoriteMovies
-                   .Include(x => x.Movie)
                    .Skip((Page - 1) * PageSize)
                    .Take(PageSize)
                    .Select(x => x.Movie).ToListAsync();
