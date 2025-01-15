@@ -372,7 +372,8 @@ namespace MovieRecommendationApi.Controllers
                 {
                     Rating = rl.Rating,
                     Movie = mapper.Map<MovieDto>(rl.Movie!),
-                    CreatedAt = rl.CreatedAt
+                    CreatedAt = rl.CreatedAt,
+                    Content = rl.Content
                 }).ToListAsync();
 
             return Ok(new PaginatedResponse<RatingDto>
