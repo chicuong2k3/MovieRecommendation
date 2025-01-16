@@ -426,6 +426,7 @@ namespace MovieRecommendationApi.Controllers
 
             var totalRes = await dbContext.Reviews
                 .Where(x => x.MovieId == id)
+                .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
 
             var res = totalRes.Skip(PageSize * (Page - 1)).Take(PageSize);
