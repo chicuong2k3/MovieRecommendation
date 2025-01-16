@@ -281,8 +281,8 @@ namespace MovieRecommendationApi.Controllers
         [HttpGet("top-trending-movies")]
         public async Task<IActionResult> GetTopTrendingMovie([FromQuery] string type = "day")
         {
-            var today = new DateTime(2024, 11, 25).ToUniversalTime();
-            if (type == "day")
+			var today = DateTime.UtcNow;
+			if (type == "day")
             {
                 // Lấy ngày hiện tại
                 var todayMovies = await dbContext.Movies

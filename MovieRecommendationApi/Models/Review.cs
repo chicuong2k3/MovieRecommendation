@@ -17,5 +17,5 @@ namespace MovieRecommendationApi.Models
         public DateTime? UpdatedAt { get; set; }
         public string? Url { get; set; }
         public int Rating { get; set; }
-    }
+    }   
 }
