@@ -20,5 +20,7 @@ namespace MovieRecommendationApi.Models
         public string? Name { get; set; }
         [JsonPropertyName("tmdb_id")]
         public int TmdbId { get; set; }
+
+        public IList<Movie>? Movies { get; set; }
     }
 }

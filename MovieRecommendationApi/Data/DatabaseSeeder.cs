@@ -20,25 +20,28 @@ namespace MovieRecommendationApi.Data
 
             if (movies == null || !movies.Any()) return;
 
-            SeedGenres(context);
+            //SeedGenres(context);
 
-            SeedBelongsToCollections(context, movies);
-            SeedProductionCompanies(context, movies);
-            SeedProductionCountries(context, movies);
-            SeedSpokenLanguages(context, movies);
+            //SeedBelongsToCollections(context, movies);
+            //SeedProductionCompanies(context, movies);
+            //SeedProductionCountries(context, movies);
+            //SeedSpokenLanguages(context, movies);
 
-            SeedVideos(context, movies);
+            //SeedVideos(context, movies);
 
-            SeedPeople(context);
+            //SeedPeople(context);
 
-            SeedCredits(context, movies);
-            SeedMovies(context, movies);
 
-            SeedMovieCredits(context);
+            //SeedMovies(context, movies);
+            //SeedSimilarMovies(context);
 
-            SeedSimilarMovies(context);
+            //SeedReviews(context, movies);
 
-            SeedReviews(context, movies);
+            //SeedMovieCredits(context);
+            //SeedCredits(context, movies);
+
+            SeedGenreMovies(context, movies);
+
 
             Console.WriteLine("Database seeding complete.");
         }
@@ -65,7 +68,7 @@ namespace MovieRecommendationApi.Data
         {
             var collections = movies
                 .Where(m => m.BelongsToCollection != null)
-                .Select(m => m.BelongsToCollection).Take(500)
+                .Select(m => m.BelongsToCollection)
                 .DistinctBy(c => c.Id)
                 .ToList();
 
@@ -84,7 +87,7 @@ namespace MovieRecommendationApi.Data
         {
             var companies = movies
                 .SelectMany(m => m.ProductionCompanies ?? new List<ProductionCompany>())
-                .DistinctBy(c => c.Id).Take(500)
+                .DistinctBy(c => c.Id)
                 .ToList();
 
             foreach (var company in companies)
@@ -140,7 +143,6 @@ namespace MovieRecommendationApi.Data
             var creditsDict = movies
                 .Where(c => c != null)
                 .DistinctBy(c => c.Id)
-                .Take(100)
                 .ToDictionary(x => x.Id, x => x.Credit);
 
             var existingPeople = context.People
@@ -184,9 +186,11 @@ namespace MovieRecommendationApi.Data
                     }
                     context.Movies.Update(movie);  // Update the movie entity
                 }
+
+                context.SaveChanges();
             }
 
-            context.SaveChanges();
+
         }
 
 
@@ -194,7 +198,7 @@ namespace MovieRecommendationApi.Data
         {
             var videos = movies
                 .SelectMany(m => m.Videos ?? new List<Video>())
-                .DistinctBy(v => v.Id).Take(500)
+                .DistinctBy(v => v.Id)
                 .ToList();
 
             foreach (var video in videos)
@@ -210,8 +214,6 @@ namespace MovieRecommendationApi.Data
 
         private static void SeedMovies(AppDbContext context, List<Movie> movies)
         {
-            var i = 0;
-
             // Retrieve related data for efficiency
             var genres = context.Genres.ToList();
             var collections = context.BelongsToCollections.ToList();
@@ -249,12 +251,6 @@ namespace MovieRecommendationApi.Data
                     context.Movies.Add(movie);
                 }
 
-                if (i >= 1000)
-                {
-                    break;
-                }
-
-                i++;
             }
 
             // Save the changes to the database
@@ -317,7 +313,7 @@ namespace MovieRecommendationApi.Data
 
             if (people == null || !people.Any()) return;
 
-            var selectedPeople = people.Take(100);
+            var selectedPeople = people;
 
             // Step 1: Preload all MovieCredits
             var movieCredits = selectedPeople
@@ -374,13 +370,13 @@ namespace MovieRecommendationApi.Data
                     // If the person doesn't exist, add them to the context
                     context.People.Add(person);
                 }
+
+                context.SaveChanges();
             }
 
 
-            context.SaveChanges();
+
         }
-
-
 
 
         private static void SeedSimilarMovies(AppDbContext context)
@@ -425,7 +421,6 @@ namespace MovieRecommendationApi.Data
         private static void SeedReviews(AppDbContext context, List<Movie> movies)
         {
             var reviews = movies
-                .Take(500)
                 .SelectMany(movie => movie.ReviewModels?.Select(review => (movie.Id, review))
                              ?? Enumerable.Empty<(string MovieId, ReviewModel ReviewModel)>())
                 .ToList();
@@ -460,7 +455,7 @@ namespace MovieRecommendationApi.Data
                 var review = new Review
                 {
                     Id = reviewModel.Id,
-                    //User = user,
+                    UserId = user.Id,
                     MovieId = movieId, // Assign the MovieId here
                     Content = reviewModel.Content,
                     CreatedAt = reviewModel.CreatedAt,
@@ -475,6 +470,24 @@ namespace MovieRecommendationApi.Data
             context.SaveChanges(); // Save all changes in one batch
         }
 
+        private static void SeedGenreMovies(AppDbContext context, List<Movie> movies)
+        {
+            var genres = context.Genres.ToList();
+
+            foreach (var movie in movies)
+            {
+                var genreIds = movie.Genres?.Select(x => x.IdForCrawling).ToList() ?? [];
+                var existingGenres = genres.Where(x => genreIds.Contains(x.IdForCrawling)).ToList();
+                var existingMovie = context.Movies.FirstOrDefault(m => m.Id == movie.Id);
+
+                if (existingMovie == null) continue;
+
+                existingMovie.Genres = existingGenres;
+            }
+
+
+            context.SaveChanges();
+        }
     }
 
     public class ReviewModel
